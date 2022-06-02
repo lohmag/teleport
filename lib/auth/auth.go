@@ -636,6 +636,11 @@ func (a *Server) GetClusterName(opts ...services.MarshalOption) (types.ClusterNa
 	return a.GetCache().GetClusterName(opts...)
 }
 
+// GetInstaller gets the installer resource for this cluster
+func (a *Server) GetInstaller(ctx context.Context) (types.Installer, error) {
+	return a.GetCache().GetInstaller(ctx)
+}
+
 // GetDomainName returns the domain name that identifies this authority server.
 // Also known as "cluster name"
 func (a *Server) GetDomainName() (string, error) {
