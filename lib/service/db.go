@@ -21,7 +21,6 @@ import (
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/events"
-	"github.com/gravitational/teleport/lib/events/filesessions"
 	"github.com/gravitational/teleport/lib/limiter"
 	"github.com/gravitational/teleport/lib/reversetunnel"
 	"github.com/gravitational/teleport/lib/services"
@@ -83,20 +82,6 @@ func (process *TeleportProcess) initDatabaseService() (retErr error) {
 		if err != nil {
 			return trace.Wrap(err)
 		}
-	}
-
-	// Start uploader that will scan a path on disk and upload completed
-	// sessions to the auth server.
-	uploaderCfg := filesessions.UploaderConfig{
-		Streamer: accessPoint,
-		AuditLog: conn.Client,
-	}
-	completerCfg := events.UploadCompleterConfig{
-		SessionTracker: conn.Client,
-	}
-	err = process.initUploaderService(uploaderCfg, completerCfg)
-	if err != nil {
-		return trace.Wrap(err)
 	}
 
 	// Create database resources from databases defined in the static configuration.
