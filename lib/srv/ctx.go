@@ -341,6 +341,10 @@ type ServerContext struct {
 	// populated for port forwarding requests.
 	DstAddr string
 
+	// allowFileCopying controls if remote file operations via SCP/SFTP are allowed
+	// by the server.
+	allowFileCopying bool
+
 	// x11rdy{r,w} is used to signal from the child process to the
 	// parent process when X11 forwarding is set up.
 	x11rdyr *os.File
@@ -627,6 +631,25 @@ func (c *ServerContext) getSession() *session {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.session
+}
+
+func (c *ServerContext) SetAllowFileCopying(allow bool) {
+	c.allowFileCopying = allow
+}
+
+// CheckFileCopyingAllowed returns an error if remote file operations via
+// SCP or SFTP are not allowed by the user's role or the node's config.
+func (c *ServerContext) CheckFileCopyingAllowed() error {
+	// Check if remote file operations are disabled for this node.
+	if !c.allowFileCopying {
+		return trace.AccessDenied("node does not allow file copying via SCP or SFTP")
+	}
+	// Check if the user's RBAC role allows remote file operations.
+	if !c.Identity.AccessChecker.CanCopyFiles() {
+		return errFileCopyingNotPermitted
+	}
+
+	return nil
 }
 
 // OpenXServerListener opens a new XServer unix listener.

@@ -241,6 +241,10 @@ func (e *localExec) transformSecureCopy() error {
 		return nil
 	}
 
+	if err := e.Ctx.CheckFileCopyingAllowed(); err != nil {
+		return trace.Wrap(err)
+	}
+
 	// for scp requests update the command to execute to launch teleport with
 	// scp parameters just like openssh does.
 	teleportBin, err := os.Executable()
@@ -359,6 +363,7 @@ func (e *remoteExec) PID() int {
 	return 0
 }
 
+// HERE
 func emitExecAuditEvent(ctx *ServerContext, cmd string, execErr error) {
 	// Create common fields for event.
 	serverMeta := apievents.ServerMetadata{
