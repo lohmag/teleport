@@ -97,6 +97,7 @@ import (
 	"github.com/gravitational/teleport/lib/system"
 	"github.com/gravitational/teleport/lib/utils"
 	"github.com/gravitational/teleport/lib/web"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/google/uuid"
 	"github.com/gravitational/roundtrip"
@@ -3268,7 +3269,10 @@ func (process *TeleportProcess) initProxyEndpoint(conn *Connector) error {
 	if err != nil {
 		return trace.Wrap(err)
 	}
-	alpnRouter := setupALPNRouter(listeners, serverTLSConfig, cfg)
+
+	// TODO Feels like this guy will be the performance bottleneck. Explore other options.
+	connStateWatcher := alpnproxy.NewConnStateWatcher(http.StateClosed)
+	alpnRouter := setupALPNRouter(listeners, serverTLSConfig, cfg, connStateWatcher)
 
 	// register SSH reverse tunnel server that accepts connections
 	// from remote teleport nodes
@@ -3425,6 +3429,7 @@ func (process *TeleportProcess) initProxyEndpoint(conn *Connector) error {
 			Handler:           proxyLimiter,
 			ReadHeaderTimeout: apidefaults.DefaultDialTimeout,
 			ErrorLog:          utils.NewStdlogger(log.Error, teleport.ComponentProxy),
+			ConnState:         connStateWatcher.ConnStateCallback,
 		}
 		process.RegisterCriticalFunc("proxy.web", func() error {
 			utils.Consolef(cfg.Console, log, teleport.ComponentProxy, "Web proxy service %s:%s is starting on %v.",
@@ -3964,7 +3969,7 @@ func (process *TeleportProcess) setupProxyTLSConfig(conn *Connector, tsrv revers
 	return tlsConfig, nil
 }
 
-func setupALPNRouter(listeners *proxyListeners, serverTLSConf *tls.Config, cfg *Config) *alpnproxy.Router {
+func setupALPNRouter(listeners *proxyListeners, serverTLSConf *tls.Config, cfg *Config, connStateWatcher *alpnproxy.ConnStateWatcher) *alpnproxy.Router {
 	if listeners.web == nil || cfg.Proxy.DisableTLS || cfg.Proxy.DisableALPNSNIListener {
 		return nil
 	}
@@ -3995,7 +4000,20 @@ func setupALPNRouter(listeners *proxyListeners, serverTLSConf *tls.Config, cfg *
 				alpncommon.ProtocolHTTP2,
 				acme.ALPNProto,
 			),
-			Handler:    webWrapper.HandleConnection,
+			HandlerWithConnInfo: func(ctx context.Context, conn net.Conn, info alpnproxy.ConnectionInfo) error {
+				logrus.Infof("-->> %v HTTP conn start %v", time.Now(), info)
+				defer logrus.Infof("-->> %v HTTP conn end", time.Now())
+
+				if slices.Contains(info.ALPN, "teleport-http-in-http") {
+					waitCtx := connStateWatcher.WaitFor(ctx, conn)
+
+					defer func() {
+						<-waitCtx.Done()
+					}()
+				}
+
+				return trace.Wrap(webWrapper.HandleConnection(ctx, conn))
+			},
 			ForwardTLS: false,
 		})
 		listeners.web = webWrapper

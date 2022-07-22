@@ -23,6 +23,7 @@ import (
 	"encoding/base64"
 	"io"
 	"net"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -540,4 +541,52 @@ func (p *Proxy) Close() error {
 		return trace.Wrap(err)
 	}
 	return nil
+}
+
+// TODO -- find a better place and name
+type ConnStateWatcher struct {
+	mu    sync.RWMutex
+	conns map[net.Conn]context.CancelFunc
+	state http.ConnState
+}
+
+func NewConnStateWatcher(state http.ConnState) *ConnStateWatcher {
+	return &ConnStateWatcher{
+		conns: make(map[net.Conn]context.CancelFunc),
+		state: state,
+	}
+}
+
+func (w *ConnStateWatcher) WaitFor(ctx context.Context, conn net.Conn) context.Context {
+	ctx, cancel := context.WithCancel(ctx)
+	w.mu.Lock()
+	w.conns[conn] = cancel
+	w.mu.Unlock()
+	return ctx
+}
+
+func (w *ConnStateWatcher) ConnStateCallback(conn net.Conn, state http.ConnState) {
+	if state != w.state {
+		return
+	}
+
+	w.mu.RLock()
+	cancel, found := w.conns[conn]
+	w.mu.RUnlock()
+
+	if !found {
+		return
+	}
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	cancel, found = w.conns[conn]
+	if !found {
+		return
+	}
+
+	delete(w.conns, conn)
+	cancel()
+	return
 }
