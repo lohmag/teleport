@@ -31,6 +31,11 @@ func windowsPushPipeline() pipeline {
 		Branch: triggerRef{Include: []string{"master", "branch/*", "tcsc/build-windows*"}},
 		Repo:   triggerRef{Include: []string{"gravitational/*"}},
 	}
+
+	perBuildWorkspace := "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER"
+	perBuildTeleportSrc := perBuildWorkspace + "/go/src/github.com/gravitational/teleport"
+	perBuildWebappsSrc := perBuildWorkspace + "/go/src/github.com/gravitational/webapps"
+
 	p.Steps = []step{
 		{
 			Name: "Check out code",
@@ -40,11 +45,15 @@ func windowsPushPipeline() pipeline {
 			},
 			Commands: []string{
 				`$ErrorActionPreference = 'Stop'`,
-				`$TeleportSrc = "$Env:WORKSPACE_DIR/go/src/github.com/gravitational/teleport"`,
-				`New-Item -Path "$TeleportSrc" -ItemType Directory | Out-Null`,
+				`$TeleportSrc = ` + perBuildTeleportSrc,
+				`New-Item -Path $TeleportSrc -ItemType Directory | Out-Null`,
 				`cd $TeleportSrc`,
 				`git clone https://github.com/gravitational/${DRONE_REPO_NAME}.git .`,
 				`git checkout ${DRONE_TAG:-$DRONE_COMMIT}`,
+				`$WebappsSrc = ` + perBuildWebappsSrc,
+				`cd $WebappsSrc`,
+				`git clone https://github.com/gravitational/webapps.git .`,
+				`git checkout $(go run $TeleportSrc/build.assets/tooling/cmd/get-webapps-version)`,
 			},
 		},
 	}
