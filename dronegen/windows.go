@@ -41,7 +41,6 @@ func windowsPushPipeline() pipeline {
 	perBuildWebappsSrc := perBuildWorkspace + "/go/src/github.com/gravitational/webapps"
 
 	p.Steps = []step{
-		installWindowsNodeToolchainStep(p.Workspace.Path),
 		{
 			Name: "Check out code",
 			Environment: map[string]value{
@@ -61,6 +60,7 @@ func windowsPushPipeline() pipeline {
 				`git checkout $(go run $TeleportSrc/build.assets/tooling/cmd/get-webapps-version)`,
 			},
 		},
+		installWindowsNodeToolchainStep(p.Workspace.Path),
 		cleanUpWindowsToolchainsStep(p.Workspace.Path),
 	}
 
