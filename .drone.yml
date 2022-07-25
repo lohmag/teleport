@@ -659,26 +659,26 @@ steps:
 - name: Check out code
   commands:
   - $ErrorActionPreference = 'Stop'
-  - $TeleportSrc = "$Env:WORKSPACE_DIR\$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport"
+  - $TeleportSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport"
   - $TeleportRev = "${DRONE_TAG:-$DRONE_COMMIT}"
   - New-Item -Path $TeleportSrc -ItemType Directory | Out-Null
   - cd $TeleportSrc
   - git clone https://github.com/gravitational/${DRONE_REPO_NAME}.git .
   - git checkout $TeleportRev
-  - $WebappsSrc = "$Env:WORKSPACE_DIR\$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/webapps"
+  - $WebappsSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/webapps"
   - New-Item -Path $WebappsSrc -ItemType Directory | Out-Null
   - cd $WebappsSrc
   - git clone https://github.com/gravitational/webapps.git .
-  - git checkout $(go run $TeleportSrc\build.assets\tooling\cmd\get-webapps-version\main.go)
-  - cd $TeleportSrc
-  - $SSHDir = "$Env:WORKSPACE_DIR\$Env:DRONE_BUILD_NUMBER\.ssh"
+  - git checkout $(go run $TeleportSrc/build.assets/tooling/cmd/get-webapps-version/main.go)
+  - $SSHDir = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/.ssh"
   - New-Item -Path "$SSHDir" -ItemType Directory | Out-Null
   - $Env:GITHUB_PRIVATE_KEY | Out-File -Encoding ascii "$SSHDir\id_rsa"
   - Invoke-WebRequest "https://api.github.com/meta" -UseBasicParsing | ConvertFrom-JSON
-    | Select-Object -ExpandProperty "ssh_keys" | ForEach-Object { "github.com $_"}
-    | Out-File -Encoding ASCII "$SSHDir\known_hosts"
+    | Select-Object -ExpandProperty "ssh_keys" | ForEach-Object { "github.com $_"
+    } | Out-File -Encoding ASCII "$SSHDir\known_hosts"
   - $Env:GIT_SSH_COMMAND="ssh -i $SSHDir/id_rsa -o UserKnownHostsFile=$SSHDir/known_hosts
-    -F NUL"
+    -F/dev/null"
+  - cd $TeleportSrc
   - git submodule update --init e
   - git submodule update --init --recursive webassets
   - Remove-Item -Recursive $SSHDir
@@ -695,14 +695,14 @@ steps:
   - $NodeZipfile = "node-$NodeVersion-win-x64.zip"
   - Invoke-WebRequest -Uri https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip
     -OutFile $NodeZipfile
-  - Expand-Archive -Path $NodeZipfile -DestinationPath $Env:TEMP\$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED\toolchains
-  - $Env:Path = "$Env:Path;$Env:TEMP\$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED\toolchains\node-v$NodeVersion"
+  - Expand-Archive -Path $NodeZipfile -DestinationPath $Env:TEMP/$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED/toolchains
+  - $Env:Path = "$Env:Path;$Env:TEMP/$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED/toolchains/node-v$NodeVersion"
   - corepack enable yarn
   environment:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
 - name: Clean up toolchains (post)
   commands:
-  - Remove-Item -Recurse -Path $Env:TEMP\$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED\toolchains
+  - Remove-Item -Recurse -Path $Env:TEMP/$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED/toolchains
   environment:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
   when:
@@ -5707,6 +5707,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: 1c04dbfc7510dd073abbf301fdb7b8bdd8c79cf973f5ae1cebf481c06e4f9a18
+hmac: 0599711a07d11089f8409136b342a8bb4b4274d8461170490a6b095f3ccd6853
 
 ...

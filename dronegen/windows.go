@@ -17,7 +17,7 @@ package main
 import "path"
 
 const (
-	windowsToolchainDir = `$Env:TEMP\$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED\toolchains`
+	windowsToolchainDir = `$Env:TEMP/$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED/toolchains`
 )
 
 func newWindowsPipeline(name string) pipeline {
@@ -36,7 +36,7 @@ func windowsPushPipeline() pipeline {
 		Repo:   triggerRef{Include: []string{"gravitational/*"}},
 	}
 
-	perBuildWorkspace := `$Env:WORKSPACE_DIR\$Env:DRONE_BUILD_NUMBER`
+	perBuildWorkspace := `$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER`
 	perBuildTeleportSrc := perBuildWorkspace + "/go/src/github.com/gravitational/teleport"
 	perBuildWebappsSrc := perBuildWorkspace + "/go/src/github.com/gravitational/webapps"
 
