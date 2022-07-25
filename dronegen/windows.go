@@ -64,7 +64,11 @@ func windowsPushPipeline() pipeline {
 				`$SSHDir = "` + perBuildWorkspace + `\.ssh"`,
 				`New-Item -Path "$SSHDir" -ItemType Directory | Out-Null`,
 				`$Env:GITHUB_PRIVATE_KEY | Out-File -Encoding ascii "$SSHDir\id_rsa"`,
-				`(Invoke-WebRequest "https://api.github.com/meta" | ConvertFrom-JSON).ssh_keys | ForEach-Object {"github.com $_"} | Out-File -Encoding ASCII "$SSHDir\known_hosts"`,
+				`Invoke-WebRequest "https://api.github.com/meta" | ` +
+					`ConvertFrom-JSON | ` +
+					`Select-Object "ssh_keys" | ` +
+					`ForEach-Object { "github.com $_"} | ` +
+					`Out-File -Encoding ASCII "$SSHDir\known_hosts"`,
 				`$Env:GIT_SSH_COMMAND="'ssh -i $SSHDir/id_rsa -o UserKnownHostsFile=$SSHDir/known_hosts" -F NUL'`,
 				`git submodule update --init e`,
 				`git submodule update --init --recursive webassets`,
