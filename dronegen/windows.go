@@ -17,7 +17,7 @@ package main
 import "path"
 
 const (
-	windowsToolchainDir = `$TEMP\$DRONE_BUILD_NUMBER-$DRONE_BUILD_CREATED\toolchains`
+	windowsToolchainDir = `$Env:TEMP\$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED\toolchains`
 )
 
 func newWindowsPipeline(name string) pipeline {
