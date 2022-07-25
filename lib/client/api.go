@@ -1912,6 +1912,42 @@ func (tc *TeleportClient) SSH(ctx context.Context, command []string, runLocally 
 	return tc.runShell(ctx, nodeClient, types.SessionPeerMode, nil, nil)
 }
 
+func (tc *TeleportClient) ReportConnectionDiagnostic(ctx context.Context, testId string, connectionErr error) error {
+	proxyClient, err := tc.ConnectToProxy(ctx)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	defer proxyClient.Close()
+
+	clt, err := proxyClient.ConnectToRootCluster(ctx)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	successDiagnosticSpec := types.ConnectionDiagnosticSpecV1{
+		Success: true,
+		Message: "success",
+	}
+	if connectionErr != nil {
+		successDiagnosticSpec = types.ConnectionDiagnosticSpecV1{
+			Success: false,
+			Message: connectionErr.Error(),
+		}
+	}
+
+	connectionDiagnostic, err := types.NewConnectionDiagnosticV1(testId, map[string]string{}, successDiagnosticSpec)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	err = clt.CreateConnectionDiagnostic(ctx, connectionDiagnostic)
+	if trace.IsAlreadyExists(err) {
+		return trace.AlreadyExists("test-id already used, please generate another one")
+	}
+
+	return trace.Wrap(err)
+}
+
 func (tc *TeleportClient) startPortForwarding(ctx context.Context, nodeClient *NodeClient) error {
 	if len(tc.Config.LocalForwardPorts) > 0 {
 		for _, fp := range tc.Config.LocalForwardPorts {

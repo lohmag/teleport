@@ -350,6 +350,10 @@ type CLIConf struct {
 
 	// disableAccessRequest disables automatic resource access requests.
 	disableAccessRequest bool
+
+	// testID identifies which testid should be used to registar the success or failure of executing this command
+	// This will create a new Connection Diagnostic
+	testID string
 }
 
 // Stdout returns the stdout writer.
@@ -525,6 +529,7 @@ func Run(ctx context.Context, args []string, opts ...cliOption) error {
 	ssh.Flag("participant-req", "Displays a verbose list of required participants in a moderated session.").BoolVar(&cf.displayParticipantRequirements)
 	ssh.Flag("request-reason", "Reason for requesting access").StringVar(&cf.RequestReason)
 	ssh.Flag("disable-access-request", "Disable automatic resource access requests").BoolVar(&cf.disableAccessRequest)
+	ssh.Flag("test-id", "TestID used to store a Connection Diagnostic").StringVar(&cf.testID)
 
 	// Daemon service for teleterm client
 	daemon := app.Command("daemon", "Daemon is the tsh daemon service").Hidden()
@@ -2547,6 +2552,13 @@ func onSSH(cf *CLIConf) error {
 		}
 		return nil
 	})
+
+	if cf.testID != "" {
+		if err := tc.ReportConnectionDiagnostic(cf.Context, cf.testID, err); err != nil {
+			return trace.Wrap(err)
+		}
+	}
+
 	// Exit with the same exit status as the failed command.
 	if tc.ExitStatus != 0 {
 		var exitErr *exitCodeError
