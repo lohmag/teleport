@@ -660,13 +660,13 @@ steps:
   commands:
   - $global:ProgressPreference = 'SilentlyContinue'
   - $ErrorActionPreference = 'Stop'
-  - $NodeVersion = $(make -C $WORKSPACE_DIR/go/src/github.com/gravitational/teleport/build.assets
+  - $NodeVersion = $(make -C $Env:WORKSPACE_DIR/go/src/github.com/gravitational/teleport/build.assets
     print-node-version)
   - $NodeZipfile = "node-$NodeVersion-win-x64.zip"
   - Invoke-WebRequest -Uri https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip
     -OutFile $NodeZipfile
-  - Expand-Archive -Path $NodeZip -DestinationPath $Env:TEMP\$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED\toolchains
-  - $Env:Path = $Env:Path;$Env:TEMP\$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED\toolchainsnode-v$NodeVersion
+  - Expand-Archive -Path $NodeZipfile -DestinationPath $Env:TEMP\$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED\toolchains
+  - $Env:Path = "$Env:Path;$Env:TEMP\$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED\toolchains\node-v$NodeVersion"
   - corepack enable yarn
   environment:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
@@ -5693,6 +5693,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: fb36f541e15b70d901ec1c5482fb9909f3614e9b849ea3d26768648d8acf9cb3
+hmac: 070fb4781e0e8fdfa28b2acf0c5cdcf09f77fbc69ca8617a7db041a55c4b044e
 
 ...

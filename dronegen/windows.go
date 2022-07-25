@@ -74,11 +74,11 @@ func installWindowsNodeToolchainStep(workspacePath string) step {
 		Commands: []string{
 			`$global:ProgressPreference = 'SilentlyContinue'`,
 			`$ErrorActionPreference = 'Stop'`,
-			`$NodeVersion = $(make -C $WORKSPACE_DIR/go/src/github.com/gravitational/teleport/build.assets print-node-version)`,
+			`$NodeVersion = $(make -C $Env:WORKSPACE_DIR/go/src/github.com/gravitational/teleport/build.assets print-node-version)`,
 			`$NodeZipfile = "node-$NodeVersion-win-x64.zip"`,
 			`Invoke-WebRequest -Uri https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip -OutFile $NodeZipfile`,
-			`Expand-Archive -Path $NodeZip -DestinationPath ` + windowsToolchainDir,
-			`$Env:Path = $Env:Path;` + windowsToolchainDir + `node-v$NodeVersion`,
+			`Expand-Archive -Path $NodeZipfile -DestinationPath ` + windowsToolchainDir,
+			`$Env:Path = "$Env:Path;` + windowsToolchainDir + `\node-v$NodeVersion"`,
 			`corepack enable yarn`,
 		},
 	}
