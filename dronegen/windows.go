@@ -16,6 +16,10 @@ package main
 
 import "path"
 
+const (
+	windowsToolchainDir = `$TEMP\$DRONE_BUILD_NUMBER-$DRONE_BUILD_CREATED\toolchains`
+)
+
 func newWindowsPipeline(name string) pipeline {
 	p := newExecPipeline(name)
 	p.Workspace.Path = path.Join("C:/Drone/Workspace", name)
@@ -37,6 +41,7 @@ func windowsPushPipeline() pipeline {
 	perBuildWebappsSrc := perBuildWorkspace + "/go/src/github.com/gravitational/webapps"
 
 	p.Steps = []step{
+		installWindowsNodeToolchainStep(p.Workspace.Path),
 		{
 			Name: "Check out code",
 			Environment: map[string]value{
@@ -56,7 +61,38 @@ func windowsPushPipeline() pipeline {
 				`git checkout $(go run $TeleportSrc/build.assets/tooling/cmd/get-webapps-version)`,
 			},
 		},
+		cleanUpWindowsToolchainsStep(p.Workspace.Path),
 	}
 
 	return p
+}
+
+func installWindowsNodeToolchainStep(workspacePath string) step {
+	return step{
+		Name:        "Install Node Toolchain",
+		Environment: map[string]value{"WORKSPACE_DIR": {raw: workspacePath}},
+		Commands: []string{
+			`$global:ProgressPreference = 'SilentlyContinue'`,
+			`$ErrorActionPreference = 'Stop'`,
+			`$NodeVersion = $(make -C $WORKSPACE_DIR/go/src/github.com/gravitational/teleport/build.assets print-node-version)`,
+			`$NodeZipfile = "node-$NodeVersion-win-x64.zip"`,
+			`Invoke-WebRequest -Uri https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip -OutFile $NodeZipfile`,
+			`Expand-Archive -Path $NodeZip -DestinationPath ` + windowsToolchainDir,
+			`$Env:Path = $Env:Path;` + windowsToolchainDir + `node-v$NodeVersion`,
+			`corepack enable yarn`,
+		},
+	}
+}
+
+func cleanUpWindowsToolchainsStep(workspacePath string) step {
+	return step{
+		Name:        "Clean up toolchains (post)",
+		Environment: map[string]value{"WORKSPACE_DIR": {raw: workspacePath}},
+		When: &condition{
+			Status: []string{"success", "failure"},
+		},
+		Commands: []string{
+			`Remove-Item -Recurse -Path ` + windowsToolchainDir,
+		},
+	}
 }
