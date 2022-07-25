@@ -659,12 +659,13 @@ steps:
 - name: Check out code
   commands:
   - $ErrorActionPreference = 'Stop'
-  - $TeleportSrc = $Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport
+  - $TeleportSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport"
   - New-Item -Path $TeleportSrc -ItemType Directory | Out-Null
   - cd $TeleportSrc
   - git clone https://github.com/gravitational/${DRONE_REPO_NAME}.git .
   - git checkout ${DRONE_TAG:-$DRONE_COMMIT}
-  - $WebappsSrc = $Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/webapps
+  - $WebappsSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/webapps"
+  - New-Item -Path $WebappsSrc -ItemType Directory | Out-Null
   - cd $WebappsSrc
   - git clone https://github.com/gravitational/webapps.git .
   - git checkout $(go run $TeleportSrc/build.assets/tooling/cmd/get-webapps-version)
@@ -5693,6 +5694,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: db4fea15faab87d42defb3046abb610cbbde7b8742796eb795e1020fcc0d8b74
+hmac: 13edfd76695c9e468d01e48dd2a3bed0178837555f3107efa7cade3bf3711df5
 
 ...
