@@ -661,8 +661,8 @@ steps:
   - $ErrorActionPreference = 'Stop'
   - $TeleportSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport"
   - $TeleportRev = "${DRONE_TAG:-$DRONE_COMMIT}"
-  - 'WriteHost "Teleport Source Dir: $TeleportSrc"'
-  - 'WriteHost "Teleport Source Rev: $TeleportRev"'
+  - 'Write-Host "Teleport Source Dir: $TeleportSrc"'
+  - 'Write-Host "Teleport Source Rev: $TeleportRev"'
   - New-Item -Path $TeleportSrc -ItemType Directory | Out-Null
   - cd $TeleportSrc
   - git clone https://github.com/gravitational/${DRONE_REPO_NAME}.git .
@@ -5697,6 +5697,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: 00a5ffbb2289390850c97e7cb612861550d084620949a7d15ac4b88d55907c4c
+hmac: f19e2f6d8aca89e39dd4d4b3075793cb4d5f7bbd442aa3d7572d02013af2deea
 
 ...
