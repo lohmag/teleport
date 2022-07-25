@@ -36,7 +36,7 @@ func windowsPushPipeline() pipeline {
 		Repo:   triggerRef{Include: []string{"gravitational/*"}},
 	}
 
-	perBuildWorkspace := "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER"
+	perBuildWorkspace := `$Env:WORKSPACE_DIR\$Env:DRONE_BUILD_NUMBER`
 	perBuildTeleportSrc := perBuildWorkspace + "/go/src/github.com/gravitational/teleport"
 	perBuildWebappsSrc := perBuildWorkspace + "/go/src/github.com/gravitational/webapps"
 
@@ -59,11 +59,11 @@ func windowsPushPipeline() pipeline {
 				`New-Item -Path $WebappsSrc -ItemType Directory | Out-Null`,
 				`cd $WebappsSrc`,
 				`git clone https://github.com/gravitational/webapps.git .`,
-				`git checkout $(cd $TeleportSrc; go run build.assets/tooling/cmd/get-webapps-version)`,
+				`git checkout $(go run $TeleportSrc\build.assets\tooling\cmd\get-webapps-version\main.go)`,
 				`cd $TeleportSrc`,
-				`$SSHDir = "` + perBuildWorkspace + `/.ssh"`,
+				`$SSHDir = "` + perBuildWorkspace + `\.ssh"`,
 				`New-Item -Path "$SSHDir" -ItemType Directory | Out-Null`,
-				`$Env:GITHUB_PRIVATE_KEY | Out-File -Encoding ascii "$SSHDir/id_rsa"`,
+				`$Env:GITHUB_PRIVATE_KEY | Out-File -Encoding ascii "$SSHDir\id_rsa"`,
 				`(Invoke-WebRequest "https://api.github.com/meta" | ConvertFrom-JSON).ssh_keys | ForEach-Object {"github.com $_"} | Out-File -Encoding ASCII "$SSHDir\known_hosts"`,
 				`$Env:GIT_SSH_COMMAND="'ssh -i $SSHDir/id_rsa -o UserKnownHostsFile=$SSHDir/known_hosts" -F NUL'`,
 				`git submodule update --init e`,
