@@ -17,13 +17,13 @@ limitations under the License.
 package alpnproxy
 
 import (
+	"encoding/binary"
 	"io"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/gravitational/teleport/lib/utils"
-
-	mplex "github.com/libp2p/go-mplex"
 )
 
 // newBufferedConn creates new instance of bufferedConn.
@@ -90,20 +90,92 @@ func (conn readOnlyConn) SetDeadline(t time.Time) error      { return nil }
 func (conn readOnlyConn) SetReadDeadline(t time.Time) error  { return nil }
 func (conn readOnlyConn) SetWriteDeadline(t time.Time) error { return nil }
 
-func newMultiplexConn(baseConn net.Conn, stream *mplex.Stream) net.Conn {
-	return &multiplexConn{stream, baseConn}
+func newPingConn(conn net.Conn) *pingConn {
+	return &pingConn{Conn: conn}
 }
 
-type multiplexConn struct {
-	stream *mplex.Stream
-	baseConn net.Conn
+type pingConn struct {
+	net.Conn
+
+	muRead  sync.Mutex
+	muWrite sync.Mutex
+
+	bytesRead   int
+	currentSize int32
 }
 
-func (c *multiplexConn) Read(p []byte) (int, error)         { return c.stream.Read(p) }
-func (c *multiplexConn) Write(p []byte) (int, error)        { return c.stream.Write(p) }
-func (c *multiplexConn) Close() error                       { return c.stream.Close() }
-func (c *multiplexConn) LocalAddr() net.Addr                { return c.baseConn.LocalAddr() }
-func (c *multiplexConn) RemoteAddr() net.Addr               { return c.baseConn.RemoteAddr() }
-func (c *multiplexConn) SetDeadline(t time.Time) error      { return c.stream.SetDeadline(t) }
-func (c *multiplexConn) SetReadDeadline(t time.Time) error  { return c.stream.SetReadDeadline(t) }
-func (c *multiplexConn) SetWriteDeadline(t time.Time) error { return c.stream.SetWriteDeadline(t) }
+func (c *pingConn) Read(p []byte) (int, error) {
+	c.muRead.Lock()
+	defer c.muRead.Unlock()
+
+	err := c.discardPingReads()
+	if err != nil {
+		return 0, err
+	}
+
+	readSize := c.currentSize
+	if c.currentSize > int32(len(p)) {
+		readSize = int32(len(p))
+	}
+
+	n, err := c.Conn.Read(p[:readSize])
+	c.bytesRead += n
+
+	// Check if it has read everything.
+	if int32(c.bytesRead) >= c.currentSize {
+		c.bytesRead = 0
+		c.currentSize = 0
+	}
+
+	return n, err
+}
+
+func (c *pingConn) WritePing() error {
+	c.muWrite.Lock()
+	defer c.muWrite.Unlock()
+
+	return binary.Write(c.Conn, binary.LittleEndian, int32(0))
+}
+
+func (c *pingConn) discardPingReads() error {
+	if c.bytesRead > 0 {
+		return nil
+	}
+
+	for c.currentSize == 0 {
+		err := binary.Read(c.Conn, binary.LittleEndian, &c.currentSize)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *pingConn) Write(p []byte) (int, error) {
+	c.muWrite.Lock()
+	defer c.muWrite.Unlock()
+
+	size := int32(len(p))
+	if size == 0 {
+		return 0, nil
+	}
+
+	// Write packet size.
+	if err := binary.Write(c.Conn, binary.LittleEndian, size); err != nil {
+		return 0, err
+	}
+
+	// Iterate until everything is written.
+	var written int
+	for written < len(p) {
+		n, err := c.Conn.Write(p)
+		written += n
+
+		if err != nil {
+			return written, err
+		}
+	}
+
+	return written, nil
+}

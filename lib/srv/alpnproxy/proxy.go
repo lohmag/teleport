@@ -38,7 +38,6 @@ import (
 	"github.com/gravitational/teleport/lib/utils"
 
 	"github.com/gravitational/trace"
-	mplex "github.com/libp2p/go-mplex"
 	"github.com/sirupsen/logrus"
 )
 
@@ -385,7 +384,8 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 
 	var handlerConn net.Conn = tlsConn
 	// Check if Multiplex is supported/required by the client.
-	if hello.SupportedProtos[0] == string(common.ProtocolMultiplex) {
+	if len(hello.SupportedProtos) > 0 && hello.SupportedProtos[0] == string(common.ProtocolMultiplex) {
+		fmt.Println("-->> Starting multiplex")
 		// Handle connection multiplexing.
 		handlerConn, err = p.handleConnectionMultiplexing(ctx, tlsConn)
 		if err != nil {
@@ -405,24 +405,10 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 
 // handleConnectionMultiplexing
 func (p *Proxy) handleConnectionMultiplexing(ctx context.Context, conn net.Conn) (net.Conn, error) {
-	fmt.Println("-->> Starting multiplex connection")
-	m, err := mplex.NewMultiplex(conn, true, nil)
-	if err != nil {
-		return nil, trace.Wrap(err)
-	}
-
-	stream, err := m.Accept()
-	if err != nil {
-		return nil, trace.Wrap(err)
-	}
+	pingConn := newPingConn(conn)
 
 	// Next stream is going to handle ping.
 	go func() {
-		stream, err := m.Accept()
-		if err != nil {
-			return
-		}
-
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
 		for {
@@ -431,7 +417,8 @@ func (p *Proxy) handleConnectionMultiplexing(ctx context.Context, conn net.Conn)
 				fmt.Println("-->> ping done")
 				return
 			case <-ticker.C:
-				_, err := stream.Write([]byte("ping"))
+				fmt.Println("-->> writing ping")
+				err := pingConn.WritePing()
 				if err != nil {
 					fmt.Println("-->> error writing ping", err)
 					return
@@ -440,7 +427,7 @@ func (p *Proxy) handleConnectionMultiplexing(ctx context.Context, conn net.Conn)
 		}
 	}()
 
-	return newMultiplexConn(conn, stream), nil
+	return pingConn, nil
 }
 
 // getTLSConfig returns HandlerDesc.TLSConfig if custom TLS configuration was set for the handler

@@ -27,7 +27,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/gravitational/trace"
-	mplex "github.com/libp2p/go-mplex"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 
@@ -163,37 +162,7 @@ func (l *LocalProxy) handleDownstreamConnection(ctx context.Context, downstreamC
 	}
 	defer baseConn.Close()
 
-	fmt.Println("-->> Starting multiplex")
-	m, err := mplex.NewMultiplex(baseConn, true, nil)
-	if err != nil {
-		return trace.Wrap(err)
-	}
-
-	fmt.Println("-->> Starting creating stream")
-	stream, err := m.NewStream(ctx)
-	if err != nil {
-		return trace.Wrap(err)
-	}
-
-	upstreamConn := newMultiplexConn(baseConn, stream)
-
-	// Ping handler.
-	go func() {
-		pingStream, err := m.NewStream(ctx)
-		if err != nil {
-			return
-		}
-
-		buf := make([]byte, 32)
-		for {
-			n, err := pingStream.Read(buf)
-			if err != nil {
-				fmt.Println("-->> error reading ping", err)
-				return
-			}
-			fmt.Println("-->> received ping", string(buf[:n]))
-		}
-	}()
+	upstreamConn := newPingConn(baseConn)
 
 	errC := make(chan error, 2)
 	go func() {
