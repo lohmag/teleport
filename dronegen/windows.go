@@ -49,7 +49,7 @@ func windowsPushPipeline() pipeline {
 			},
 			Commands: []string{
 				`$ErrorActionPreference = 'Stop'`,
-				`Write-Host Executing $PSCommandPath`,
+				`Write-Host "Executing $PSCommandPath"`,
 				`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
 				`$TeleportRev = "${DRONE_TAG:-$DRONE_COMMIT}"`,
 				`New-Item -Path $TeleportSrc -ItemType Directory | Out-Null`,
