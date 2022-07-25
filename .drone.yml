@@ -665,8 +665,8 @@ steps:
   - $NodeZipfile = "node-$NodeVersion-win-x64.zip"
   - Invoke-WebRequest -Uri https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip
     -OutFile $NodeZipfile
-  - Expand-Archive -Path $NodeZip -DestinationPath $TEMP\$DRONE_BUILD_NUMBER-$DRONE_BUILD_CREATED\toolchains
-  - $Env:Path = $Env:Path;$TEMP\$DRONE_BUILD_NUMBER-$DRONE_BUILD_CREATED\toolchainsnode-v$NodeVersion
+  - Expand-Archive -Path $NodeZip -DestinationPath $Env:TEMP\$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED\toolchains
+  - $Env:Path = $Env:Path;$Env:TEMP\$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED\toolchainsnode-v$NodeVersion
   - corepack enable yarn
   environment:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
@@ -688,7 +688,7 @@ steps:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
 - name: Clean up toolchains (post)
   commands:
-  - Remove-Item -Recurse -Path $TEMP\$DRONE_BUILD_NUMBER-$DRONE_BUILD_CREATED\toolchains
+  - Remove-Item -Recurse -Path $Env:TEMP\$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED\toolchains
   environment:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
   when:
@@ -5693,6 +5693,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: 056144552c1200f3ba86332ad7133867bbdaa640f134fc6c734082aeeb1459a4
+hmac: fb36f541e15b70d901ec1c5482fb9909f3614e9b849ea3d26768648d8acf9cb3
 
 ...
