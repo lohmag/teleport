@@ -1219,8 +1219,11 @@ func adminCreds() (*int, *int, error) {
 	return &uid, &gid, nil
 }
 
-// initUploadHandler initializes upload handler based on the config settings,
-func initUploadHandler(ctx context.Context, auditConfig types.ClusterAuditConfig, dataDir string) (events.MultipartHandler, error) {
+// initAuthUploadHandler initializes the auth server's upload handler based upon the configuration.
+// When configured to store session recordings in external storage, this will be an API client for
+// cloud-provider storage. Otherwise a local file-based handler is used which stores the recordings
+// on disk.
+func initAuthUploadHandler(ctx context.Context, auditConfig types.ClusterAuditConfig, dataDir string) (events.MultipartHandler, error) {
 	if !auditConfig.ShouldUploadSessions() {
 		recordsDir := filepath.Join(dataDir, events.RecordsDir)
 		if err := os.MkdirAll(recordsDir, teleport.SharedDirMode); err != nil {
@@ -1280,9 +1283,8 @@ func initUploadHandler(ctx context.Context, auditConfig types.ClusterAuditConfig
 	}
 }
 
-// initExternalLog initializes external storage, if the storage is not
-// setup, returns (nil, nil).
-func initExternalLog(ctx context.Context, auditConfig types.ClusterAuditConfig, log logrus.FieldLogger, backend backend.Backend) (events.IAuditLog, error) {
+// initAuthAuditLog initializes the auth server's audit log.
+func initAuthAuditLog(ctx context.Context, auditConfig types.ClusterAuditConfig, backend backend.Backend) (events.IAuditLog, error) {
 	var hasNonFileLog bool
 	var loggers []events.IAuditLog
 	for _, eventsURI := range auditConfig.AuditEventsURIs() {
@@ -1415,7 +1417,7 @@ func (process *TeleportProcess) initAuthService() error {
 			cfg.Auth.AuditConfig.SetUseFIPSEndpoint(types.ClusterAuditConfigSpecV2_FIPS_ENABLED)
 		}
 
-		uploadHandler, err = initUploadHandler(
+		uploadHandler, err = initAuthUploadHandler(
 			process.ExitContext(), cfg.Auth.AuditConfig, filepath.Join(cfg.DataDir, teleport.LogsDir))
 		if err != nil {
 			if !trace.IsNotFound(err) {
@@ -1430,7 +1432,7 @@ func (process *TeleportProcess) initAuthService() error {
 		}
 		// initialize external loggers.  may return (nil, nil) if no
 		// external loggers have been defined.
-		externalLog, err := initExternalLog(process.ExitContext(), cfg.Auth.AuditConfig, process.log, process.backend)
+		externalLog, err := initAuthAuditLog(process.ExitContext(), cfg.Auth.AuditConfig, process.backend)
 		if err != nil {
 			if !trace.IsNotFound(err) {
 				return trace.Wrap(err)
@@ -1536,8 +1538,10 @@ func (process *TeleportProcess) initAuthService() error {
 
 	process.setLocalAuth(authServer)
 
-	// Upload completer is responsible for checking for initiated but abandoned
-	// session uploads and completing them. it will be closed once the process exits.
+	// The auth server runs its own upload completer, which is necessary in sync recording modes where
+	// a node can abandon an upload before it is competed.
+	// (In async recording modes, auth only ever sees completed uploads, as the node's upload completer
+	// packages up the parts into a single upload before sending to auth)
 	if uploadHandler != nil {
 		err = events.StartNewUploadCompleter(process.ExitContext(), events.UploadCompleterConfig{
 			Uploader:       uploadHandler,
@@ -2426,11 +2430,17 @@ func (process *TeleportProcess) initUploaderService() error {
 	}
 
 	connectors := process.getConnectors()
-	if len(connectors) == 0 {
+	var conn *Connector
+	for _, c := range connectors {
+		if c.Client != nil {
+			conn = c
+			break
+		}
+	}
+	// TODO(zmb3): this is allowed if auth is the only service running in process
+	if conn == nil {
 		return trace.BadParameter("no connectors found")
 	}
-
-	conn := connectors[0]
 
 	// create folder for uploads
 	uid, gid, err := adminCreds()
@@ -2495,10 +2505,13 @@ func (process *TeleportProcess) initUploaderService() error {
 	}
 
 	uploadCompleter, err := events.NewUploadCompleter(events.UploadCompleterConfig{
-		GracePeriod:    defaults.UploadGracePeriod,
 		Uploader:       handler,
 		AuditLog:       conn.Client,
 		SessionTracker: conn.Client,
+		// DELETE IN 11.0.0
+		// Provide a grace period so that Auth does not prematurely upload
+		// sessions which don't have a session tracker (v9.2 and earlier)
+		GracePeriod: defaults.UploadGracePeriod,
 	})
 	if err != nil {
 		return trace.Wrap(err)
