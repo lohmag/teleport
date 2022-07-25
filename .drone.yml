@@ -674,8 +674,11 @@ steps:
   - $SSHDir = "$Env:WORKSPACE_DIR\$Env:DRONE_BUILD_NUMBER\.ssh"
   - New-Item -Path "$SSHDir" -ItemType Directory | Out-Null
   - $Env:GITHUB_PRIVATE_KEY | Out-File -Encoding ascii "$SSHDir\id_rsa"
-  - Invoke-WebRequest "https://api.github.com/meta" | ConvertFrom-JSON | Select-Object
-    "ssh_keys" | ForEach-Object { "github.com $_"} | Out-File -Encoding ASCII "$SSHDir\known_hosts"
+  - Invoke-WebRequest "https://api.github.com/meta" -UseBasicParsing | \
+  - '  ConvertFrom-JSON | \'
+  - '  Select-Object "ssh_keys" | \'
+  - '  ForEach-Object { "github.com $_"} | \'
+  - '  Out-File -Encoding ASCII "$SSHDir\known_hosts"'
   - $Env:GIT_SSH_COMMAND="'ssh -i $SSHDir/id_rsa -o UserKnownHostsFile=$SSHDir/known_hosts"
     -F NUL'
   - git submodule update --init e
@@ -5706,6 +5709,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: 164ddb82c476fe2a7f4ba728f65d9a67f6ab59dab6f940fdd82416e2ac5b2f21
+hmac: 26394ceb59b1bd63517052a4ac88f6fa27a84360a617eb70d6945b19fc42e862
 
 ...
