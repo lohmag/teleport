@@ -92,7 +92,10 @@ func installWindowsNodeToolchainStep(workspacePath string) step {
 			`$global:ProgressPreference = 'SilentlyContinue'`,
 			`$ErrorActionPreference = 'Stop'`,
 			`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
-			`$NodeVersion = $(make -C $TeleportSrc/build.assets print-node-version)`,
+			// We can't use make, as there are too many posix dependencies to
+			// abstract away right now, so instead of `$(make -C $TeleportSrc/build.assets print-node-version)`,
+			// we will just hardcode it for now
+			`$NodeVersion = "16.13.2"`,
 			`$NodeZipfile = "node-$NodeVersion-win-x64.zip"`,
 			`Invoke-WebRequest -Uri https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip -OutFile $NodeZipfile`,
 			`Expand-Archive -Path $NodeZipfile -DestinationPath ` + windowsToolchainDir,
