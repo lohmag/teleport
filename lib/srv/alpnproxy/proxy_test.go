@@ -555,7 +555,7 @@ func TestProxyPingConnections(t *testing.T) {
 
 	suite.router.Add(HandlerDecs{
 		MatchFunc: MatchByProtocolWithPing(common.ProtocolsWithPingSupport...),
-		Handler: handlerFunc,
+		Handler:   handlerFunc,
 	})
 	suite.router.AddDBTLSHandler(handlerFunc)
 	suite.Start(t)

@@ -95,7 +95,8 @@ func MatchByProtocol(protocols ...common.Protocol) MatchFunc {
 	}
 }
 
-// TODO
+// MatchByProtocolWithPing creates match function based on client TLS APLN
+// protocol matching also their ping protocol variations.
 func MatchByProtocolWithPing(protocols ...common.Protocol) MatchFunc {
 	m := make(map[common.Protocol]struct{})
 	for _, v := range protocols {
@@ -420,7 +421,7 @@ func (p *Proxy) handleConnectionMultiplexing(ctx context.Context, conn net.Conn)
 	// Next stream is going to handle ping.
 	go func() {
 		// TODO(gabrielcorado): move this to some configuration.
-		ticker := time.NewTicker(3*time.Minute)
+		ticker := time.NewTicker(3 * time.Minute)
 		defer ticker.Stop()
 		for {
 			select {
