@@ -64,7 +64,8 @@ func windowsPushPipeline() pipeline {
 		}, {
 			Name: "Check out Submodules",
 			Environment: map[string]value{
-				"WORKSPACE_DIR": {raw: p.Workspace.Path},
+				"WORKSPACE_DIR":      {raw: p.Workspace.Path},
+				"GITHUB_PRIVATE_KEY": {fromSecret: "GITHUB_PRIVATE_KEY"},
 			},
 			Commands: []string{
 				`$TeleportSrc/build.assets/windows/git.ps1`,
