@@ -75,7 +75,7 @@ func windowsPushPipeline() pipeline {
 				`cd $TeleportSrc`,
 				`git submodule update --init e`,
 				`git submodule update --init --recursive webassets`,
-				`Reset-Git`,
+				`Reset-Git -Workspace $Workspace`,
 			},
 		},
 		installWindowsNodeToolchainStep(p.Workspace.Path),

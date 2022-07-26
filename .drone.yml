@@ -682,7 +682,7 @@ steps:
   - cd $TeleportSrc
   - git submodule update --init e
   - git submodule update --init --recursive webassets
-  - Reset-Git
+  - Reset-Git -Workspace $Workspace
   environment:
     GITHUB_PRIVATE_KEY:
       from_secret: GITHUB_PRIVATE_KEY
@@ -5708,6 +5708,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: 027710d5719764f35285ac1f06761b3d84755c1b602b42d6d7f752ff2272d4cf
+hmac: 43bbc7fc4fa354774ab8f1c2eadb068a518dcecb93cda02201bcc1352d663dad
 
 ...
