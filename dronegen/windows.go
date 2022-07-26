@@ -49,7 +49,8 @@ func windowsPushPipeline() pipeline {
 			Commands: []string{
 				`$ErrorActionPreference = 'Stop'`,
 				`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
-				`$TeleportRev = "${DRONE_TAG:-$DRONE_COMMIT}"`,
+				`$TeleportRev = "$DRONE_TAG"`,
+				`if ($TeleportRev -eq "") {$TeleportRev = "$DRONE_COMMIT}"`,
 				`Write-Host "DroneRev: $TeleportRev"`,
 				`New-Item -Path $TeleportSrc -ItemType Directory | Out-Null`,
 				`cd $TeleportSrc`,
@@ -69,7 +70,7 @@ func windowsPushPipeline() pipeline {
 			},
 			Commands: []string{
 				`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
-				`$TeleportSrc/build.assets/windows/git.ps1`,
+				`. "$TeleportSrc/build.assets/windows/git.ps1"`,
 				`Enable-Git -Workspace $Env:WORKSPACE_DIR -PrivateKey $Env:GITHUB_PRIVATE_KEY`,
 				`cd $TeleportSrc`,
 				`git submodule update --init e`,
