@@ -48,9 +48,9 @@ func windowsPushPipeline() pipeline {
 			},
 			Commands: []string{
 				`$ErrorActionPreference = 'Stop'`,
+				`$Env:GOCACHE = "` + perBuildWorkspace + `/gocache"`,
 				`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
 				`$TeleportRev = "$Env:DRONE_COMMIT"`, // need to allow override for tag
-				`Write-Host "DroneRev: $TeleportRev"`,
 				`New-Item -Path $TeleportSrc -ItemType Directory | Out-Null`,
 				`cd $TeleportSrc`,
 				`git clone https://github.com/gravitational/${DRONE_REPO_NAME}.git .`,
@@ -110,7 +110,7 @@ func cleanUpWindowsWorkspaceStep(workspacePath string) step {
 			Status: []string{"success", "failure"},
 		},
 		Commands: []string{
-			`Remove-Item -Path "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER"`,
+			`Remove-Item -Recurse -Path "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER"`,
 		},
 	}
 }

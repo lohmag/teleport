@@ -659,9 +659,9 @@ steps:
 - name: Check out Teleport
   commands:
   - $ErrorActionPreference = 'Stop'
+  - $Env:GOCACHE = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/gocache"
   - $TeleportSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport"
   - $TeleportRev = "$Env:DRONE_COMMIT"
-  - 'Write-Host "DroneRev: $TeleportRev"'
   - New-Item -Path $TeleportSrc -ItemType Directory | Out-Null
   - cd $TeleportSrc
   - git clone https://github.com/gravitational/${DRONE_REPO_NAME}.git .
@@ -703,7 +703,7 @@ steps:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
 - name: Clean up workspace (post)
   commands:
-  - Remove-Item -Path "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER"
+  - Remove-Item -Recurse -Path "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER"
   environment:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
   when:
@@ -5708,6 +5708,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: 5e4a597f98d7e4b3709fcf78875f6b862b0dd503b1f1c858c23f68e6ee9c9bbf
+hmac: a4050e6ad1c430c11244c02a51566399de40a442b51541692afb8f76730a0eb2
 
 ...
