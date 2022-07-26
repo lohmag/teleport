@@ -79,7 +79,8 @@ const (
 	// MySQL server version.
 	ProtocolMySQLWithVerPrefix = Protocol(string(ProtocolMySQL) + "-")
 
-	// TODO
+	// ProtocolPingSuffix is TLS ALPN suffix used to wrap connections with
+	// Ping.
 	ProtocolPingSuffix Protocol = "-ping"
 )
 
@@ -147,7 +148,8 @@ func IsDBTLSProtocol(protocol Protocol) bool {
 	}
 }
 
-// TODO
+// ProtocolsWithPingSupport is the list of protocols that Ping connection is
+// supported.
 var ProtocolsWithPingSupport = []Protocol{
 	ProtocolPostgres,
 	ProtocolMySQL,
@@ -157,7 +159,8 @@ var ProtocolsWithPingSupport = []Protocol{
 	ProtocolSnowflake,
 }
 
-// TODO
+// ProtocolsWithPing receives a list a protocols and returns a list of them with
+// the Ping protocol suffix.
 func ProtocolsWithPing(protocols ...Protocol) []Protocol {
 	res := make([]Protocol, len(protocols))
 	for i := range res {
@@ -167,17 +170,18 @@ func ProtocolsWithPing(protocols ...Protocol) []Protocol {
 	return res
 }
 
-// TODO
+// ProtocolWithPing receives a protocol and returns it with the Ping protocol
+// suffix.
 func ProtocolWithPing(protocol Protocol) Protocol {
 	return Protocol(string(protocol) + string(ProtocolPingSuffix))
 }
 
-// TODO
+// IsPingProcotol checks if the provided protocol is suffixed with Ping.
 func IsPingProtocol(protocol Protocol) bool {
 	return strings.HasSuffix(string(protocol), string(ProtocolPingSuffix))
 }
 
-// TODO
+// HasPingSupport checks if the provided protocol supports Ping protocol.
 func HasPingSupport(protocol Protocol) bool {
 	for i := range ProtocolsWithPingSupport {
 		if ProtocolsWithPingSupport[i] == protocol {
