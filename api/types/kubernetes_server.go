@@ -108,7 +108,7 @@ func NewKubeServersV3FromServer(server Server) (result []KubeServer, err error) 
 			Expires: server.GetMetadata().Expires,
 		}, KubernetesServerSpecV3{
 			Version:  server.GetTeleportVersion(),
-			Hostname: server.GetHostname(),
+			Hostname: server.GetAddr(),
 			HostID:   server.GetName(),
 			Rotation: server.GetRotation(),
 			Cluster:  kubeCluster,
@@ -247,6 +247,10 @@ func (s *KubernetesServerV3) CheckAndSetDefaults() error {
 	}
 	if s.Spec.Cluster == nil {
 		return trace.BadParameter("missing kube server Cluster")
+	}
+
+	if s.Spec.Hostname == "" {
+		return trace.BadParameter("missing kube server Hostname")
 	}
 
 	if err := s.Spec.Cluster.CheckAndSetDefaults(); err != nil {
