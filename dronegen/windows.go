@@ -69,7 +69,7 @@ func windowsPushPipeline() pipeline {
 			Commands: []string{
 				`$Workspace = "` + perBuildWorkspace + `"`,
 				`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
-				`. "$TeleportSrc/build.assets/windows/git.ps1"`,
+				`. "$TeleportSrc/build.assets/windows/build.ps1"`,
 				`Enable-Git -Workspace $Workspace -PrivateKey $Env:GITHUB_PRIVATE_KEY`,
 				`cd $TeleportSrc`,
 				`git submodule update --init e`,
@@ -78,6 +78,7 @@ func windowsPushPipeline() pipeline {
 			},
 		},
 		installWindowsNodeToolchainStep(p.Workspace.Path),
+		installWindowsGoToolchainStep(p.Workspace.Path),
 		cleanUpWindowsWorkspaceStep(p.Workspace.Path),
 	}
 
@@ -92,12 +93,30 @@ func installWindowsNodeToolchainStep(workspacePath string) step {
 			`$global:ProgressPreference = 'SilentlyContinue'`,
 			`$ErrorActionPreference = 'Stop'`,
 			`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
-			`. "$TeleportSrc/build.assets/windows/node.ps1"`,
+			`. "$TeleportSrc/build.assets/windows/build.ps1"`,
 			// We can't use make, as there are too many posix dependencies to
 			// abstract away right now, so instead of `$(make -C $TeleportSrc/build.assets print-node-version)`,
 			// we will just hardcode it for now
 			`$NodeVersion = "16.13.2"`,
 			`Install-Node -NodeVersion $NodeVersion -ToolchainDir "` + windowsToolchainDir + `"`,
+		},
+	}
+}
+
+func installWindowsGoToolchainStep(workspacePath string) step {
+	return step{
+		Name:        "Install Go Toolchain",
+		Environment: map[string]value{"WORKSPACE_DIR": {raw: workspacePath}},
+		Commands: []string{
+			`$global:ProgressPreference = 'SilentlyContinue'`,
+			`$ErrorActionPreference = 'Stop'`,
+			`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
+			`. "$TeleportSrc/build.assets/windows/build.ps1"`,
+			// We can't use make, as there are too many posix dependencies to
+			// abstract away right now, so instead of `$(make -C $TeleportSrc/build.assets print-node-version)`,
+			// we will just hardcode it for now
+			`$GoVersion = "1.18.3"`,
+			`Install-Go -GoVersion $GoVersion -ToolchainDir "` + windowsToolchainDir + `"`,
 		},
 	}
 }
