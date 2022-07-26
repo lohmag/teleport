@@ -16,10 +16,9 @@ function Enable-Git {
                 | ConvertFrom-JSON `
                 | Select-Object -ExpandProperty "ssh_keys" `
                 | ForEach-Object {"github.com $_"} `
-                | Out-File -Encoding ASCII "$SSHDir/known_hosts"`
+                | Out-File -Encoding ASCII "$SSHDir/known_hosts"
             $SSHCmd = "ssh -i $SSHDir/id_rsa -o UserKnownHostsFile=$SSHDir/known_hosts -F/dev/null"
-            $Env:GIT_SSH_COMMAND = $SSHDir
-            return $SSHCmd
+            $Env:GIT_SSH_COMMAND = $SSHCmd
         }
 }
 
