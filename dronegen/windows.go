@@ -97,7 +97,7 @@ func installWindowsNodeToolchainStep(workspacePath string) step {
 			// abstract away right now, so instead of `$(make -C $TeleportSrc/build.assets print-node-version)`,
 			// we will just hardcode it for now
 			`$NodeVersion = "16.13.2"`,
-			`Install-Node -NodeVersion $NodeVersion -ToolchainDir = "` + windowsToolchainDir + `"`,
+			`Install-Node -NodeVersion $NodeVersion -ToolchainDir "` + windowsToolchainDir + `"`,
 		},
 	}
 }
