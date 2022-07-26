@@ -418,9 +418,10 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 func (p *Proxy) handlePingConnection(ctx context.Context, conn net.Conn) (net.Conn, error) {
 	pingConn := newPingConn(conn)
 
-	// Next stream is going to handle ping.
+	// Start ping routine. It will continuously send pings in a defined
+	// interval.
 	go func() {
-		// TODO(gabrielcorado): move this to some configuration.
+		// TODO(gabrielcorado): make the ping interval configurable.
 		ticker := time.NewTicker(3 * time.Minute)
 		defer ticker.Stop()
 		for {
