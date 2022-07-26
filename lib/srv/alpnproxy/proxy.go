@@ -398,7 +398,7 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 	// Check if Multiplex is supported/required by the client.
 	if len(hello.SupportedProtos) > 0 && common.IsPingProtocol(common.Protocol(hello.SupportedProtos[0])) {
 		// Handle connection multiplexing.
-		handlerConn, err = p.handleConnectionMultiplexing(ctx, tlsConn)
+		handlerConn, err = p.handlePingConnection(ctx, tlsConn)
 		if err != nil {
 			return trace.Wrap(err)
 		}
@@ -414,8 +414,8 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 	return trace.Wrap(handlerDesc.handle(ctx, handlerConn, connInfo))
 }
 
-// handleConnectionMultiplexing
-func (p *Proxy) handleConnectionMultiplexing(ctx context.Context, conn net.Conn) (net.Conn, error) {
+// handlePingConnection starts the server ping routine and returns `pingConn`.
+func (p *Proxy) handlePingConnection(ctx context.Context, conn net.Conn) (net.Conn, error) {
 	pingConn := newPingConn(conn)
 
 	// Next stream is going to handle ping.
