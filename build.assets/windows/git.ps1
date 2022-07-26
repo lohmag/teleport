@@ -28,6 +28,6 @@ function Reset-Git {
         [string] $Workspace
     )
     begin {
-        Remove-Item "$Workspace/.ssh"
+        Remove-Item -Path "$Workspace/.ssh"
     }
 }

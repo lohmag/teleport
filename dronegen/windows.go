@@ -79,7 +79,7 @@ func windowsPushPipeline() pipeline {
 			},
 		},
 		installWindowsNodeToolchainStep(p.Workspace.Path),
-		cleanUpWindowsToolchainsStep(p.Workspace.Path),
+		cleanUpWindowsWorkspaceStep(p.Workspace.Path),
 	}
 
 	return p
@@ -102,15 +102,15 @@ func installWindowsNodeToolchainStep(workspacePath string) step {
 	}
 }
 
-func cleanUpWindowsToolchainsStep(workspacePath string) step {
+func cleanUpWindowsWorkspaceStep(workspacePath string) step {
 	return step{
-		Name:        "Clean up toolchains (post)",
+		Name:        "Clean up workspace (post)",
 		Environment: map[string]value{"WORKSPACE_DIR": {raw: workspacePath}},
 		When: &condition{
 			Status: []string{"success", "failure"},
 		},
 		Commands: []string{
-			`Remove-Item -Recurse -Path ` + windowsToolchainDir,
+			`Remove-Item -Path "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER"`,
 		},
 	}
 }

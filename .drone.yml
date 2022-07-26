@@ -701,9 +701,9 @@ steps:
   - corepack enable yarn
   environment:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
-- name: Clean up toolchains (post)
+- name: Clean up workspace (post)
   commands:
-  - Remove-Item -Recurse -Path $Env:TEMP/$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED/toolchains
+  - Remove-Item -Path "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER"
   environment:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
   when:
@@ -5708,6 +5708,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: 43bbc7fc4fa354774ab8f1c2eadb068a518dcecb93cda02201bcc1352d663dad
+hmac: 5e4a597f98d7e4b3709fcf78875f6b862b0dd503b1f1c858c23f68e6ee9c9bbf
 
 ...
