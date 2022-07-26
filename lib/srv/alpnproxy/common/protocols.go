@@ -17,6 +17,8 @@ limitations under the License.
 package common
 
 import (
+	"strings"
+
 	"github.com/gravitational/trace"
 
 	"github.com/gravitational/teleport/lib/defaults"
@@ -77,27 +79,27 @@ const (
 	// MySQL server version.
 	ProtocolMySQLWithVerPrefix = Protocol(string(ProtocolMySQL) + "-")
 
-	// ProtocolMultiplex is TLS ALPN protocol value used to indicate connection
-	// multiplexing in Teleport. This is a custom protocol used to have
-	// different protocols within the same connection.
-	ProtocolMultiplex Protocol = "teleport-multiplex"
+	// TODO
+	ProtocolPingSuffix Protocol = "-ping"
 )
 
 // SupportedProtocols is the list of supported ALPN protocols.
-var SupportedProtocols = []Protocol{
-	ProtocolHTTP2,
-	ProtocolHTTP,
-	ProtocolPostgres,
-	ProtocolMySQL,
-	ProtocolMongoDB,
-	ProtocolRedisDB,
-	ProtocolSQLServer,
-	ProtocolSnowflake,
-	ProtocolProxySSH,
-	ProtocolReverseTunnel,
-	ProtocolAuth,
-	ProtocolMultiplex,
-}
+var SupportedProtocols = append(
+	ProtocolsWithPing(ProtocolsWithPingSupport...),
+	[]Protocol{
+		ProtocolHTTP2,
+		ProtocolHTTP,
+		ProtocolPostgres,
+		ProtocolMySQL,
+		ProtocolMongoDB,
+		ProtocolRedisDB,
+		ProtocolSQLServer,
+		ProtocolSnowflake,
+		ProtocolProxySSH,
+		ProtocolReverseTunnel,
+		ProtocolAuth,
+	}...,
+)
 
 // ProtocolsToString converts the list of Protocols to the list of strings.
 func ProtocolsToString(protocols []Protocol) []string {
@@ -135,9 +137,53 @@ func ToALPNProtocol(dbProtocol string) (Protocol, error) {
 // to terminated DB connection.
 func IsDBTLSProtocol(protocol Protocol) bool {
 	switch protocol {
-	case ProtocolMongoDB, ProtocolRedisDB, ProtocolSQLServer, ProtocolSnowflake:
+	case ProtocolMongoDB, ProtocolWithPing(ProtocolMongoDB),
+		ProtocolRedisDB, ProtocolWithPing(ProtocolRedisDB),
+		ProtocolSQLServer, ProtocolWithPing(ProtocolSQLServer),
+		ProtocolSnowflake, ProtocolWithPing(ProtocolSnowflake):
 		return true
 	default:
 		return false
 	}
+}
+
+// TODO
+var ProtocolsWithPingSupport = []Protocol{
+	ProtocolPostgres,
+	ProtocolMySQL,
+	ProtocolMongoDB,
+	ProtocolRedisDB,
+	ProtocolSQLServer,
+	ProtocolSnowflake,
+}
+
+// TODO
+func ProtocolsWithPing(protocols ...Protocol) []Protocol {
+	res := make([]Protocol, len(protocols))
+	for i := range res {
+		res[i] = ProtocolWithPing(protocols[i])
+	}
+
+	return res
+}
+
+// TODO
+func ProtocolWithPing(protocol Protocol) Protocol {
+	return Protocol(string(protocol) + string(ProtocolPingSuffix))
+}
+
+// TODO
+func IsPingProtocol(protocol Protocol) bool {
+	return strings.HasSuffix(string(protocol), string(ProtocolPingSuffix))
+}
+
+// TODO
+func HasPingSupport(protocol Protocol) bool {
+	for i := range ProtocolsWithPingSupport {
+		if ProtocolsWithPingSupport[i] == protocol {
+			return true
+		}
+	}
+
+	return false
 }

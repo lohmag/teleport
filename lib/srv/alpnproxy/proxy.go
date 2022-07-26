@@ -21,7 +21,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/base64"
-	"fmt"
 	"io"
 	"net"
 	"strings"
@@ -91,6 +90,20 @@ func MatchByProtocol(protocols ...common.Protocol) MatchFunc {
 		m[v] = struct{}{}
 	}
 	return func(sni, alpn string) bool {
+		_, ok := m[common.Protocol(alpn)]
+		return ok
+	}
+}
+
+// TODO
+func MatchByProtocolWithPing(protocols ...common.Protocol) MatchFunc {
+	m := make(map[common.Protocol]struct{})
+	for _, v := range protocols {
+		m[common.ProtocolWithPing(v)] = struct{}{}
+		m[v] = struct{}{}
+	}
+
+	return func(_, alpn string) bool {
 		_, ok := m[common.Protocol(alpn)]
 		return ok
 	}
@@ -355,8 +368,6 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 		return trace.Wrap(err)
 	}
 
-	fmt.Println("-->> Supported Protos", hello.SupportedProtos)
-
 	handlerDesc, err := p.getHandlerDescBaseOnClientHelloMsg(hello)
 	if err != nil {
 		return trace.Wrap(err)
@@ -384,8 +395,7 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 
 	var handlerConn net.Conn = tlsConn
 	// Check if Multiplex is supported/required by the client.
-	if len(hello.SupportedProtos) > 0 && hello.SupportedProtos[0] == string(common.ProtocolMultiplex) {
-		fmt.Println("-->> Starting multiplex")
+	if len(hello.SupportedProtos) > 0 && common.IsPingProtocol(common.Protocol(hello.SupportedProtos[0])) {
 		// Handle connection multiplexing.
 		handlerConn, err = p.handleConnectionMultiplexing(ctx, tlsConn)
 		if err != nil {
@@ -414,13 +424,14 @@ func (p *Proxy) handleConnectionMultiplexing(ctx context.Context, conn net.Conn)
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("-->> ping done")
 				return
 			case <-ticker.C:
-				fmt.Println("-->> writing ping")
 				err := pingConn.WritePing()
 				if err != nil {
-					fmt.Println("-->> error writing ping", err)
+					if !utils.IsOKNetworkError(err) {
+						p.log.WithError(err).Warn("Failed to write ping message")
+					}
+
 					return
 				}
 			}
