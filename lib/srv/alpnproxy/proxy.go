@@ -419,7 +419,8 @@ func (p *Proxy) handleConnectionMultiplexing(ctx context.Context, conn net.Conn)
 
 	// Next stream is going to handle ping.
 	go func() {
-		ticker := time.NewTicker(time.Second)
+		// TODO(gabrielcorado): move this to some configuration.
+		ticker := time.NewTicker(3*time.Minute)
 		defer ticker.Stop()
 		for {
 			select {
