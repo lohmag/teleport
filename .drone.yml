@@ -659,7 +659,6 @@ steps:
 - name: Check out Teleport
   commands:
   - $ErrorActionPreference = 'Stop'
-  - Write-Host "Executing $PSCommandPath"
   - Copy-Item $PSCommandPath $Env:WORKSPACE_DIR/build.ps1
   - $TeleportSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport"
   - $TeleportRev = "${DRONE_TAG:-$DRONE_COMMIT}"
@@ -5705,6 +5704,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: c38b4d94fd8513529237e7ab9c42ec66a395fa22ffe58d30ad8cf79edbb9d28a
+hmac: 83ead575b56bb0f5255cf70f75d9364401aaafb1ec12d89f38d629f1de81fcea
 
 ...
