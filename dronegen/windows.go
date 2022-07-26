@@ -48,7 +48,6 @@ func windowsPushPipeline() pipeline {
 			},
 			Commands: []string{
 				`$ErrorActionPreference = 'Stop'`,
-				`Copy-Item $PSCommandPath $Env:WORKSPACE_DIR/build.ps1`,
 				`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
 				`$TeleportRev = "${DRONE_TAG:-$DRONE_COMMIT}"`,
 				`New-Item -Path $TeleportSrc -ItemType Directory | Out-Null`,
