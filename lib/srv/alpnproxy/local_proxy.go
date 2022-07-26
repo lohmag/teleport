@@ -19,7 +19,6 @@ package alpnproxy
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -148,11 +147,10 @@ func (l *LocalProxy) GetAddr() string {
 // handleDownstreamConnection proxies the downstreamConn (connection established to the local proxy) and forward the
 // traffic to the upstreamConn (TLS connection to remote host).
 func (l *LocalProxy) handleDownstreamConnection(ctx context.Context, downstreamConn net.Conn, serverName string) error {
-	fmt.Println("-->> Handling downstream connection")
 	defer downstreamConn.Close()
 
-	baseConn, err := tls.Dial("tcp", l.cfg.RemoteProxyAddr, &tls.Config{
-		NextProtos:         append([]string{string(common.ProtocolMultiplex)}, l.cfg.GetProtocols()...),
+	tlsConn, err := tls.Dial("tcp", l.cfg.RemoteProxyAddr, &tls.Config{
+		NextProtos:         l.cfg.GetProtocols(),
 		InsecureSkipVerify: l.cfg.InsecureSkipVerify,
 		ServerName:         serverName,
 		Certificates:       l.cfg.Certs,
@@ -160,9 +158,16 @@ func (l *LocalProxy) handleDownstreamConnection(ctx context.Context, downstreamC
 	if err != nil {
 		return trace.Wrap(err)
 	}
-	defer baseConn.Close()
+	defer tlsConn.Close()
+	if err := tlsConn.Handshake(); err != nil {
+		return trace.Wrap(err)
+	}
 
-	upstreamConn := newPingConn(baseConn)
+	var upstreamConn net.Conn = tlsConn
+	if common.IsPingProtocol(common.Protocol(tlsConn.ConnectionState().NegotiatedProtocol)) {
+		log.Debug("Using ping connection")
+		upstreamConn = newPingConn(tlsConn)
+	}
 
 	errC := make(chan error, 2)
 	go func() {
