@@ -42,10 +42,9 @@ func windowsPushPipeline() pipeline {
 
 	p.Steps = []step{
 		{
-			Name: "Check out code",
+			Name: "Check out Teleport",
 			Environment: map[string]value{
-				"WORKSPACE_DIR":      {raw: p.Workspace.Path},
-				"GITHUB_PRIVATE_KEY": {fromSecret: "GITHUB_PRIVATE_KEY"},
+				"WORKSPACE_DIR": {raw: p.Workspace.Path},
 			},
 			Commands: []string{
 				`$ErrorActionPreference = 'Stop'`,
@@ -62,15 +61,19 @@ func windowsPushPipeline() pipeline {
 				`cd $WebappsSrc`,
 				`git clone https://github.com/gravitational/webapps.git .`,
 				`git checkout $(go run $TeleportSrc/build.assets/tooling/cmd/get-webapps-version/main.go)`,
-				`$SSHDir = "` + perBuildWorkspace + `/.ssh"`,
-				`New-Item -Path "$SSHDir" -ItemType Directory | Out-Null`,
-				`$Env:GITHUB_PRIVATE_KEY | Out-File -Encoding ascii "$SSHDir/id_rsa"`,
-				`Invoke-WebRequest "https://api.github.com/meta" -UseBasicParsing | ConvertFrom-JSON | Select-Object -ExpandProperty "ssh_keys" | ForEach-Object {"github.com $_"} | Out-File -Encoding ASCII "$SSHDir/known_hosts"`,
-				`$Env:GIT_SSH_COMMAND = "ssh -i $SSHDir/id_rsa -o UserKnownHostsFile=$SSHDir/known_hosts -F/dev/null"`,
-				`cd $TeleportSrc`,
+			},
+		}, {
+			Name: "Check out Submodules",
+			Environment: map[string]value{
+				"WORKSPACE_DIR": {raw: p.Workspace.Path},
+			},
+			Commands: []string{
+				`$TeleportSrc/build.assets/windows/git.ps1`,
+				`Enable-Git -Workspace $Env:WORKSPACE_DIR -PrivateKey $Env:GITHUB_PRIVATE_KEY`,
+				`cd ` + perBuildTeleportSrc,
 				`git submodule update --init e`,
 				`git submodule update --init --recursive webassets`,
-				`Remove-Item -Recursive $SSHDir`,
+				`Reset-Git`,
 			},
 		},
 		installWindowsNodeToolchainStep(p.Workspace.Path),
