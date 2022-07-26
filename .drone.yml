@@ -626,7 +626,7 @@ steps:
 ################################################
 # Generated using dronegen, do not edit by hand!
 # Use 'make dronegen' to update.
-# Generated at dronegen/windows.go:24
+# Generated at dronegen/windows.go:27
 ################################################
 
 kind: pipeline
@@ -691,13 +691,13 @@ steps:
   commands:
   - $global:ProgressPreference = 'SilentlyContinue'
   - $ErrorActionPreference = 'Stop'
-  - $NodeVersion = $(make -C $Env:WORKSPACE_DIR/go/src/github.com/gravitational/teleport/build.assets
-    print-node-version)
+  - $TeleportSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport"
+  - $NodeVersion = $(make -C $TeleportSrc/build.assets print-node-version)
   - $NodeZipfile = "node-$NodeVersion-win-x64.zip"
   - Invoke-WebRequest -Uri https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip
     -OutFile $NodeZipfile
-  - Expand-Archive -Path $NodeZipfile -DestinationPath $Env:TEMP/$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED/toolchains
-  - $Env:Path = "$Env:Path;$Env:TEMP/$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED/toolchains/node-v$NodeVersion"
+  - Expand-Archive -Path $NodeZipfile -DestinationPath $Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/toolchains
+  - $Env:Path = "$Env:Path;$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/toolchains/node-v$NodeVersion"
   - corepack enable yarn
   environment:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
@@ -5708,6 +5708,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: a4050e6ad1c430c11244c02a51566399de40a442b51541692afb8f76730a0eb2
+hmac: 97c0a730d467d96676622e9a3ae242366a11ed581e3d89fe6ba2a324b66bb489
 
 ...

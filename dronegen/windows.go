@@ -17,7 +17,10 @@ package main
 import "path"
 
 const (
-	windowsToolchainDir = `$Env:TEMP/$Env:DRONE_BUILD_NUMBER-$Env:DRONE_BUILD_CREATED/toolchains`
+	perBuildWorkspace   = `$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER`
+	windowsToolchainDir = perBuildWorkspace + `/toolchains`
+	perBuildTeleportSrc = perBuildWorkspace + "/go/src/github.com/gravitational/teleport"
+	perBuildWebappsSrc  = perBuildWorkspace + "/go/src/github.com/gravitational/webapps"
 )
 
 func newWindowsPipeline(name string) pipeline {
@@ -35,10 +38,6 @@ func windowsPushPipeline() pipeline {
 		Branch: triggerRef{Include: []string{"master", "branch/*", "tcsc/build-windows*"}},
 		Repo:   triggerRef{Include: []string{"gravitational/*"}},
 	}
-
-	perBuildWorkspace := `$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER`
-	perBuildTeleportSrc := perBuildWorkspace + "/go/src/github.com/gravitational/teleport"
-	perBuildWebappsSrc := perBuildWorkspace + "/go/src/github.com/gravitational/webapps"
 
 	p.Steps = []step{
 		{
@@ -92,7 +91,8 @@ func installWindowsNodeToolchainStep(workspacePath string) step {
 		Commands: []string{
 			`$global:ProgressPreference = 'SilentlyContinue'`,
 			`$ErrorActionPreference = 'Stop'`,
-			`$NodeVersion = $(make -C $Env:WORKSPACE_DIR/go/src/github.com/gravitational/teleport/build.assets print-node-version)`,
+			`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
+			`$NodeVersion = $(make -C $TeleportSrc/build.assets print-node-version)`,
 			`$NodeZipfile = "node-$NodeVersion-win-x64.zip"`,
 			`Invoke-WebRequest -Uri https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip -OutFile $NodeZipfile`,
 			`Expand-Archive -Path $NodeZipfile -DestinationPath ` + windowsToolchainDir,
