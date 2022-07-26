@@ -692,13 +692,9 @@ steps:
   - $global:ProgressPreference = 'SilentlyContinue'
   - $ErrorActionPreference = 'Stop'
   - $TeleportSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport"
+  - . "$TeleportSrc/build.assets/windows/node.ps1"
   - $NodeVersion = "16.13.2"
-  - $NodeZipfile = "node-$NodeVersion-win-x64.zip"
-  - Invoke-WebRequest -Uri https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip
-    -OutFile $NodeZipfile
-  - Expand-Archive -Path $NodeZipfile -DestinationPath $Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/toolchains
-  - $Env:Path = "$Env:Path;$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/toolchains/node-v$NodeVersion"
-  - corepack enable yarn
+  - Install-Drone -NodeVersion $NodeVersion -ToolchainDir = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/toolchains"
   environment:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
 - name: Clean up workspace (post)
@@ -5708,6 +5704,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: fe76a90ed249464bde598a122ab4277b8ee36ee30fc58a439a6a5a9b9bf1603c
+hmac: 6133070e2fd79c7d4b416084a8ad8069b4ea388d0e5a7bf96daed280083d1d8e
 
 ...
