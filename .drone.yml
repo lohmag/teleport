@@ -660,7 +660,7 @@ steps:
   commands:
   - $ErrorActionPreference = 'Stop'
   - $TeleportSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport"
-  - $TeleportRev = "${DRONE_TAG:-$DRONE_COMMIT}"
+  - $TeleportRev = "$DRONE_COMMIT"
   - 'Write-Host "DroneRev: $TeleportRev"'
   - New-Item -Path $TeleportSrc -ItemType Directory | Out-Null
   - cd $TeleportSrc
@@ -676,7 +676,7 @@ steps:
 - name: Check out Submodules
   commands:
   - $TeleportSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport"
-  - $TeleportSrc/build.assets/windows/git.ps1
+  - . "$TeleportSrc/build.assets/windows/git.ps1"
   - Enable-Git -Workspace $Env:WORKSPACE_DIR -PrivateKey $Env:GITHUB_PRIVATE_KEY
   - cd $TeleportSrc
   - git submodule update --init e
@@ -5707,6 +5707,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: 000321f2efaee8276e014951e62aaddf14d38a755f1fc2a03c4c1d827270ac8a
+hmac: fa3f68385c784292e1e64ffb0bf3d53ae548f51db9e4a54997d9a96712e5d0bd
 
 ...

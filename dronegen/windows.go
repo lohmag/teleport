@@ -49,8 +49,7 @@ func windowsPushPipeline() pipeline {
 			Commands: []string{
 				`$ErrorActionPreference = 'Stop'`,
 				`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
-				`$TeleportRev = "$DRONE_TAG"`,
-				`if ($TeleportRev -eq "") {$TeleportRev = "$DRONE_COMMIT}"`,
+				`$TeleportRev = "$DRONE_COMMIT"`, // need to allow override for tag
 				`Write-Host "DroneRev: $TeleportRev"`,
 				`New-Item -Path $TeleportSrc -ItemType Directory | Out-Null`,
 				`cd $TeleportSrc`,
