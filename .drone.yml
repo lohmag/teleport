@@ -694,7 +694,7 @@ steps:
   - $TeleportSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport"
   - . "$TeleportSrc/build.assets/windows/node.ps1"
   - $NodeVersion = "16.13.2"
-  - Install-Drone -NodeVersion $NodeVersion -ToolchainDir = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/toolchains"
+  - Install-Node -NodeVersion $NodeVersion -ToolchainDir = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/toolchains"
   environment:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
 - name: Clean up workspace (post)
@@ -5704,6 +5704,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: 6133070e2fd79c7d4b416084a8ad8069b4ea388d0e5a7bf96daed280083d1d8e
+hmac: 145ffae929e8ea66715ebb54ecbb24321dbe8aed5567795c42c4147eb3799a22
 
 ...
