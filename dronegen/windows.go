@@ -67,9 +67,10 @@ func windowsPushPipeline() pipeline {
 				"GITHUB_PRIVATE_KEY": {fromSecret: "GITHUB_PRIVATE_KEY"},
 			},
 			Commands: []string{
+				`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
 				`$TeleportSrc/build.assets/windows/git.ps1`,
 				`Enable-Git -Workspace $Env:WORKSPACE_DIR -PrivateKey $Env:GITHUB_PRIVATE_KEY`,
-				`cd ` + perBuildTeleportSrc,
+				`cd $TeleportSrc`,
 				`git submodule update --init e`,
 				`git submodule update --init --recursive webassets`,
 				`Reset-Git`,
