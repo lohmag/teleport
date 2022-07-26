@@ -50,6 +50,7 @@ func windowsPushPipeline() pipeline {
 				`$ErrorActionPreference = 'Stop'`,
 				`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
 				`$TeleportRev = "${DRONE_TAG:-$DRONE_COMMIT}"`,
+				`Write-Host "DroneRev: $TeleportRev"`,
 				`New-Item -Path $TeleportSrc -ItemType Directory | Out-Null`,
 				`cd $TeleportSrc`,
 				`git clone https://github.com/gravitational/${DRONE_REPO_NAME}.git .`,
