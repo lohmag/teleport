@@ -90,17 +90,29 @@ func (conn readOnlyConn) SetDeadline(t time.Time) error      { return nil }
 func (conn readOnlyConn) SetReadDeadline(t time.Time) error  { return nil }
 func (conn readOnlyConn) SetWriteDeadline(t time.Time) error { return nil }
 
+// newPingConn returns a ping connection wrapping the provided net.Conn.
 func newPingConn(conn net.Conn) *pingConn {
 	return &pingConn{Conn: conn}
 }
 
+// pingConn wraps a net.Conn and add ping capabilities to it, including the
+// `WritePing` function and `Read` (which excludes ping packets).
+//
+// When using this connection, the packets written will contain an initial data:
+// the packet size. When reading, this information is taken into account, but it
+// is not returned to the caller.
+//
+// Ping messages have a packet size of zero and are produced only when
+// `WritePing` is called. On `Read`, any Ping packet is discarded.
 type pingConn struct {
 	net.Conn
 
 	muRead  sync.Mutex
 	muWrite sync.Mutex
 
-	bytesRead   int
+	// bytesRead number of bytes already read from the current packet.
+	bytesRead int
+	// currentSize size of bytes of the current packet.
 	currentSize int32
 }
 
@@ -113,6 +125,7 @@ func (c *pingConn) Read(p []byte) (int, error) {
 		return 0, err
 	}
 
+	// Check if the current size is larger than the provided buffer.
 	readSize := c.currentSize
 	if c.currentSize > int32(len(p)) {
 		readSize = int32(len(p))
@@ -130,6 +143,7 @@ func (c *pingConn) Read(p []byte) (int, error) {
 	return n, err
 }
 
+// WritePing writes the ping packet to the connection.
 func (c *pingConn) WritePing() error {
 	c.muWrite.Lock()
 	defer c.muWrite.Unlock()
@@ -137,6 +151,8 @@ func (c *pingConn) WritePing() error {
 	return binary.Write(c.Conn, binary.LittleEndian, int32(0))
 }
 
+// discardPingReads reads from the wrapped net.Conn until it encounters a
+// non-ping packet.
 func (c *pingConn) discardPingReads() error {
 	if c.bytesRead > 0 {
 		return nil
