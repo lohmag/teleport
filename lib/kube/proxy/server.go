@@ -173,22 +173,11 @@ func (t *TLSServer) Serve(listener net.Listener) error {
 	}
 	t.mu.Unlock()
 
-	// Start the heartbeat to announce kubernetes_service presence.
-	//
-	// Only announce when running in an actual kube_server, or when
-	// running in proxy_service with local kube credentials. This means that
-	// proxy_service will pretend to also be kube_server.
-	if t.KubeServiceType == KubeService ||
-		(t.KubeServiceType == LegacyProxyService && len(t.fwd.kubeClusters()) > 0) {
-		log.Debugf("Starting kubernetes_service heartbeats for %q", t.Component)
-		for _, cluster := range t.fwd.kubeClusters() {
-
-			if err := t.startHeartbeat(t.closeContext, cluster); err != nil {
-				return trace.Wrap(err)
-			}
-		}
-	} else {
-		log.Debug("No local kube credentials on proxy, will not start kubernetes_service heartbeats")
+	// startStaticClusterHeartbeats starts the heartbeat process for static clusters.
+	// static clusters can be specified via kubeconfig or clusterName for Teleport agent
+	// running in Kubernetes.
+	if err := t.startStaticClustersHeartbeat(); err != nil {
+		return trace.Wrap(err)
 	}
 
 	return t.Server.Serve(tls.NewListener(mux.TLS(), t.TLS))
@@ -197,6 +186,8 @@ func (t *TLSServer) Serve(listener net.Listener) error {
 // Close closes the server and cleans up all resources.
 func (t *TLSServer) Close() error {
 	errs := []error{t.Server.Close()}
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	for _, heartbeat := range t.heartbeats {
 		errs = append(errs, heartbeat.Close())
 	}
@@ -263,7 +254,6 @@ func (t *TLSServer) getServerInfo(cluster types.KubeCluster) (types.Resource, er
 
 // startHeartbeat starts the registration heartbeat to the auth server.
 func (t *TLSServer) startHeartbeat(ctx context.Context, kubeCluster types.KubeCluster) error {
-
 	heartbeat, err := srv.NewHeartbeat(srv.HeartbeatConfig{
 		Mode:            srv.HeartbeatModeKube,
 		Context:         t.TLSServerConfig.Context,
@@ -297,4 +287,25 @@ func (t *TLSServer) getRotationState() types.Rotation {
 		return *rotation
 	}
 	return types.Rotation{}
+}
+
+func (t *TLSServer) startStaticClustersHeartbeat() error {
+	// Start the heartbeat to announce kubernetes_service presence.
+	//
+	// Only announce when running in an actual kube_server, or when
+	// running in proxy_service with local kube credentials. This means that
+	// proxy_service will pretend to also be kube_server.
+	if t.KubeServiceType == KubeService ||
+		t.KubeServiceType == LegacyProxyService {
+		log.Debugf("Starting kubernetes_service heartbeats for %q", t.Component)
+		for _, cluster := range t.fwd.kubeClusters() {
+			if err := t.startHeartbeat(t.closeContext, cluster); err != nil {
+				return trace.Wrap(err)
+			}
+		}
+	} else {
+		log.Debug("No local kube credentials on proxy, will not start kubernetes_service heartbeats")
+	}
+
+	return nil
 }
