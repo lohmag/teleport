@@ -61,7 +61,7 @@ func windowsPushPipeline() pipeline {
 				`git checkout $(go run $TeleportSrc/build.assets/tooling/cmd/get-webapps-version/main.go)`,
 			},
 		}, {
-			Name: "Check out Submodules",
+			Name: "Checkout Submodules",
 			Environment: map[string]value{
 				"WORKSPACE_DIR":      {raw: p.Workspace.Path},
 				"GITHUB_PRIVATE_KEY": {fromSecret: "GITHUB_PRIVATE_KEY"},
@@ -79,6 +79,7 @@ func windowsPushPipeline() pipeline {
 		},
 		installWindowsNodeToolchainStep(p.Workspace.Path),
 		installWindowsGoToolchainStep(p.Workspace.Path),
+
 		cleanUpWindowsWorkspaceStep(p.Workspace.Path),
 	}
 
@@ -113,7 +114,7 @@ func installWindowsGoToolchainStep(workspacePath string) step {
 			`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
 			`. "$TeleportSrc/build.assets/windows/build.ps1"`,
 			// We can't use make, as there are too many posix dependencies to
-			// abstract away right now, so instead of `$(make -C $TeleportSrc/build.assets print-node-version)`,
+			// abstract away right now, so instead of `$(make -C $TeleportSrc/build.assets print-go-version)`,
 			// we will just hardcode it for now
 			`$GoVersion = "1.18.3"`,
 			`Install-Go -GoVersion $GoVersion -ToolchainDir "` + windowsToolchainDir + `"`,
@@ -129,7 +130,7 @@ func cleanUpWindowsWorkspaceStep(workspacePath string) step {
 			Status: []string{"success", "failure"},
 		},
 		Commands: []string{
-			`Remove-Item -Recurse -Path "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER"`,
+			`Remove-Item -Recurse -Force -Path "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER"`,
 		},
 	}
 }
