@@ -396,7 +396,7 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 
 	var handlerConn net.Conn = tlsConn
 	// Check if Multiplex is supported/required by the client.
-	if len(hello.SupportedProtos) > 0 && common.IsPingProtocol(common.Protocol(hello.SupportedProtos[0])) {
+	if common.IsPingProtocol(common.Protocol(tlsConn.ConnectionState().NegotiatedProtocol)) {
 		// Handle connection multiplexing.
 		handlerConn, err = p.handlePingConnection(ctx, tlsConn)
 		if err != nil {
