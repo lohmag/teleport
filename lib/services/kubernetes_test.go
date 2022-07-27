@@ -34,7 +34,7 @@ func TestKubernetesServerUnmarshal(t *testing.T) {
 	}, types.KubernetesServerSpecV3{
 		Version:  "v3",
 		HostID:   "host_id",
-		Hostname: "",
+		Hostname: "host",
 		Cluster: &types.KubernetesClusterV3{
 			Metadata: types.Metadata{
 				Name:        "test-cluster",
@@ -60,7 +60,7 @@ func TestKubernetesServerMarshal(t *testing.T) {
 	}, types.KubernetesServerSpecV3{
 		Version:  "v3",
 		HostID:   "host_id",
-		Hostname: "",
+		Hostname: "host",
 		Cluster: &types.KubernetesClusterV3{
 			Metadata: types.Metadata{
 				Name:        "test-cluster",
@@ -87,7 +87,7 @@ metadata:
     env: dev
 spec:
   version: v3
-  hostname: ''
+  hostname: 'host'
   host_id: host_id
   rotation:
     current_id: ''

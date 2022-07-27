@@ -249,10 +249,6 @@ func (s *KubernetesServerV3) CheckAndSetDefaults() error {
 		return trace.BadParameter("missing kube server Cluster")
 	}
 
-	if s.Spec.Hostname == "" {
-		return trace.BadParameter("missing kube server Hostname")
-	}
-
 	if err := s.Spec.Cluster.CheckAndSetDefaults(); err != nil {
 		return trace.Wrap(err)
 	}

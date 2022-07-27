@@ -284,6 +284,7 @@ func testResources(resourceType, namespace string) ([]types.ResourceWithLabels, 
 				Labels: map[string]string{"name": name},
 			},
 				types.KubernetesServerSpecV3{
+					Hostname: "test",
 					Cluster: &types.KubernetesClusterV3{
 						Metadata: types.Metadata{
 							Name:   name,

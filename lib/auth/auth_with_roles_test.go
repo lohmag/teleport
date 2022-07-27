@@ -2625,8 +2625,9 @@ func TestGetAndList_KubernetesServers(t *testing.T) {
 			},
 
 			types.KubernetesServerSpecV3{
-				HostID:  name,
-				Cluster: cluster,
+				HostID:   name,
+				Hostname: "test",
+				Cluster:  cluster,
 			},
 		)
 		require.NoError(t, err)

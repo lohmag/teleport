@@ -400,7 +400,8 @@ func TestCheckKubeCluster(t *testing.T) {
 						Name: kube.GetName(),
 					},
 					Spec: types.KubernetesServerSpecV3{
-						Cluster: kube,
+						Hostname: "host",
+						Cluster:  kube,
 					},
 				})
 			}
