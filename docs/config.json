@@ -977,6 +977,7 @@
     },
     "cloud": {
       "version": "9.3.10",
+      "major_version": "9",
       "sla": {
         "monthly_percentage": "99.5%",
         "monthly_downtime": "3 hours 40 minutes"
