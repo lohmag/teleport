@@ -66,12 +66,6 @@ type Server interface {
 	SetPublicAddr(string)
 	// SetNamespace sets server namespace
 	SetNamespace(namespace string)
-	// GetApps gets the list of applications this server is proxying.
-	// DELETE IN 9.0.
-	GetApps() []*App
-	// GetApps gets the list of applications this server is proxying.
-	// DELETE IN 9.0.
-	SetApps([]*App)
 	// GetKubeClusters returns the kubernetes clusters directly handled by this
 	// server.
 	GetKubernetesClusters() []*KubernetesCluster
