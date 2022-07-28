@@ -230,7 +230,7 @@ yubikey slot 9a has a pre-generated private key with public key:
 -----END PUBLIC KEY-----
 
 Would you like to:
- (1) Resuse this key
+ (1) Reuse this key
  (2) Overwrite this key
  (3) Abort login
 ```
