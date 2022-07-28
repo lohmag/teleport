@@ -74,7 +74,7 @@ In order to make this functionality from the server's perspective, we need to ad
 
 For this [verification](https://pkg.go.dev/github.com/go-piv/piv-go@v1.9.0/piv#Verify) to take place on the server, we will need to pass the user's yubikey [attestation certificate](https://pkg.go.dev/github.com/go-piv/piv-go@v1.9.0/piv#YubiKey.AttestationCertificate), as well as an attestation statement [slot cert](https://pkg.go.dev/github.com/go-piv/piv-go@v1.9.0/piv#YubiKey.Attest) for the slot in question. Once this verification succeeds, we can be positive that the public key in the slot cert belongs to a yubikey-backed private key. If this public key matches the one the Auth Server is preparing to sign, then it can safely continue to do so.
 
-To pass the attestation certificates to the Auth Server, they will be added to the login endpoints, including `/webali/ssh/certs`, `/webapi/mfa/login/finish`, `/webapi/<sso>/callback`.
+To pass the attestation certificates to the Auth Server, they will be added to the login endpoints, including `/webapi/ssh/certs`, `/webapi/mfa/login/finish`, `/webapi/<sso>/callback`.
 
 Additionally, the attestation will return useful information about the user's yubikey and the private key in question, including:
  - The private key's PIN policy
