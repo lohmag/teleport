@@ -79,6 +79,9 @@ const (
 	// MySQL server version.
 	ProtocolMySQLWithVerPrefix = Protocol(string(ProtocolMySQL) + "-")
 
+	// ProtocolTCP is TLS ALPN protocol value used to indicate plain TCP connection.
+	ProtocolTCP Protocol = "teleport-tcp"
+
 	// ProtocolPingSuffix is TLS ALPN suffix used to wrap connections with
 	// Ping.
 	ProtocolPingSuffix Protocol = "-ping"
@@ -99,6 +102,7 @@ var SupportedProtocols = append(
 		ProtocolProxySSH,
 		ProtocolReverseTunnel,
 		ProtocolAuth,
+		ProtocolTCP,
 	}...,
 )
 
