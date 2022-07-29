@@ -395,13 +395,9 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 	}
 
 	var handlerConn net.Conn = tlsConn
-	// Check if Multiplex is supported/required by the client.
+	// Check if ping is supported/required by the client.
 	if common.IsPingProtocol(common.Protocol(tlsConn.ConnectionState().NegotiatedProtocol)) {
-		// Handle connection multiplexing.
-		handlerConn, err = p.handlePingConnection(ctx, tlsConn)
-		if err != nil {
-			return trace.Wrap(err)
-		}
+		handlerConn = p.handlePingConnection(ctx, tlsConn)
 	}
 
 	isDatabaseConnection, err := dbutils.IsDatabaseConnection(tlsConn.ConnectionState())
@@ -415,7 +411,7 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 }
 
 // handlePingConnection starts the server ping routine and returns `pingConn`.
-func (p *Proxy) handlePingConnection(ctx context.Context, conn net.Conn) (net.Conn, error) {
+func (p *Proxy) handlePingConnection(ctx context.Context, conn net.Conn) net.Conn {
 	pingConn := newPingConn(conn)
 
 	// Start ping routine. It will continuously send pings in a defined
@@ -441,7 +437,7 @@ func (p *Proxy) handlePingConnection(ctx context.Context, conn net.Conn) (net.Co
 		}
 	}()
 
-	return pingConn, nil
+	return pingConn
 }
 
 // getTLSConfig returns HandlerDesc.TLSConfig if custom TLS configuration was set for the handler
