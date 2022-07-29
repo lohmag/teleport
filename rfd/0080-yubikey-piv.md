@@ -5,6 +5,12 @@ state: draft
 
 # RFD 80 - yubikey PIV integration
 
+## Required approvers
+
+Engineering: @jakule && @r0mant
+Product: @klizhentas && @xinding33
+Security: @reedloden
+
 ## What
 
 We will integrate yubikey smart card capabilities into the Teleport login process so that users can login with a yubikey generated private key. Teleport admins will be able to require yubikey login with optional PIN and touch policies for each cluster and role.
