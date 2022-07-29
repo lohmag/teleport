@@ -137,15 +137,17 @@ func ToALPNProtocol(dbProtocol string) (Protocol, error) {
 // connection needs to be forwarded to proxy database service where custom TLS handler is invoked
 // to terminated DB connection.
 func IsDBTLSProtocol(protocol Protocol) bool {
-	switch protocol {
-	case ProtocolMongoDB, ProtocolWithPing(ProtocolMongoDB),
-		ProtocolRedisDB, ProtocolWithPing(ProtocolRedisDB),
-		ProtocolSQLServer, ProtocolWithPing(ProtocolSQLServer),
-		ProtocolSnowflake, ProtocolWithPing(ProtocolSnowflake):
-		return true
-	default:
-		return false
+	dbTLSProtocols := []Protocol{
+		ProtocolMongoDB,
+		ProtocolRedisDB,
+		ProtocolSQLServer,
+		ProtocolSnowflake,
 	}
+
+	return protocolListContains(
+		append(dbTLSProtocols, ProtocolsWithPing(dbTLSProtocols...)...),
+		protocol,
+	)
 }
 
 // ProtocolsWithPingSupport is the list of protocols that Ping connection is
@@ -183,8 +185,13 @@ func IsPingProtocol(protocol Protocol) bool {
 
 // HasPingSupport checks if the provided protocol supports Ping protocol.
 func HasPingSupport(protocol Protocol) bool {
-	for i := range ProtocolsWithPingSupport {
-		if ProtocolsWithPingSupport[i] == protocol {
+	return protocolListContains(ProtocolsWithPingSupport, protocol)
+}
+
+// protocolListContains checks if a protocol is present on the list.
+func protocolListContains(protocols []Protocol, protocol Protocol) bool {
+	for _, listProtocol := range protocols {
+		if protocol == listProtocol {
 			return true
 		}
 	}
