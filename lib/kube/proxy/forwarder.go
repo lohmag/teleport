@@ -2029,7 +2029,7 @@ func (f *Forwarder) kubeClusters() []*types.KubernetesClusterV3 {
 			},
 		)
 		if err != nil {
-			// TODO: log stuff here
+			f.log.WithError(err).Warnf("error while creating *types.KubernetesClusterV3 for cluster %q", n)
 			continue
 		}
 		res = append(res,

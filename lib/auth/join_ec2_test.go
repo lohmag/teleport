@@ -20,7 +20,6 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
 	"testing"
 	"time"
 
@@ -742,7 +741,6 @@ func TestHostUniqueCheck(t *testing.T) {
 			// request should fail
 			_, err = a.RegisterUsingToken(ctx, &request)
 			expectedErr := &trace.AccessDeniedError{}
-			fmt.Println(err)
 			require.ErrorAs(t, err, &expectedErr)
 		})
 	}
