@@ -2254,7 +2254,14 @@ func toFieldsSlice(rawEvents []apievents.AuditEvent) ([]events.EventFields, erro
 	return el, nil
 }
 
-// TODO(joel): add godoc here
+// siteSessionsGet gets the list of site sessions filtered by creation time
+// and whether they're active or not
+//
+// GET /v1/webapi/sites/:site/desktop_is_active/:desktop
+//
+// Response body:
+//
+// {"active": bool}
 func (h *Handler) desktopIsActive(w http.ResponseWriter, r *http.Request, p httprouter.Params, ctx *SessionContext, site reversetunnel.RemoteSite) (interface{}, error) {
 	desktopName := p.ByName("desktop")
 	trackers, err := h.auth.proxyClient.GetActiveSessionTrackers(r.Context())
