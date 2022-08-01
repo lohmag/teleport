@@ -101,7 +101,8 @@ func windowsPushPipeline() pipeline {
 				`Enable-Go -GoVersion $GoVersion -ToolchainDir "` + windowsToolchainDir + `"`,
 				`Enable-Node -NodeVersion $NodeVersion -ToolchainDir "` + windowsToolchainDir + `"`,
 				`cd $TeleportSrc`,
-				`go build -o build/tsh ./tool/tsh`,
+				//`go build -o build/tsh ./tool/tsh`,
+				`New-Item "build/tsh.exe" -Force -ItemType file`, // create a phoney tsh
 				`cd $WebappsSrc`,
 				`yarn install`,
 				`yarn build-and-package-term`,

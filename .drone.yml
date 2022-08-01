@@ -719,7 +719,7 @@ steps:
   - Enable-Go -GoVersion $GoVersion -ToolchainDir "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/toolchains"
   - Enable-Node -NodeVersion $NodeVersion -ToolchainDir "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/toolchains"
   - cd $TeleportSrc
-  - go build -o build/tsh ./tool/tsh
+  - New-Item "build/tsh.exe" -Force -ItemType file
   - cd $WebappsSrc
   - yarn install
   - yarn build-and-package-term
@@ -5732,6 +5732,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: 00b69a6cabc6e28a612148c826e60b7f04f411cac6dc7d9d52b2d979baf834a3
+hmac: 8119cfcf4d7eec28a7750f8dd6ad557558e2c4d7bc04e46aaf5be826fc10ebee
 
 ...
