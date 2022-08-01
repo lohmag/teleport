@@ -22,11 +22,13 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
 	"io"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -102,6 +104,8 @@ type Handler struct {
 	auth                    *sessionCache
 	sessionStreamPollPeriod time.Duration
 	clock                   clockwork.Clock
+	desktopTokens           map[string]struct{}
+
 	// sshPort specifies the SSH proxy port extracted
 	// from configuration
 	sshPort string
@@ -235,6 +239,7 @@ func NewHandler(cfg Config, opts ...HandlerOption) (*APIHandler, error) {
 		log:             newPackageLogger(),
 		clock:           clockwork.NewRealClock(),
 		ClusterFeatures: cfg.ClusterFeatures,
+		desktopTokens:   make(map[string]struct{}),
 	}
 
 	// for properly handling url-encoded parameter values.
@@ -448,7 +453,7 @@ func NewHandler(cfg Config, opts ...HandlerOption) (*APIHandler, error) {
 	h.GET("/webapi/sites/:site/desktops", h.WithClusterAuth(h.clusterDesktopsGet))
 	h.GET("/webapi/sites/:site/desktops/:desktopName", h.WithClusterAuth(h.getDesktopHandle))
 	// GET /webapi/sites/:site/desktops/:desktopName/connect?access_token=<bearer_token>&username=<username>&width=<width>&height=<height>
-	h.GET("/webapi/sites/:site/desktops/:desktopName/connect", h.WithClusterAuth(h.desktopConnectHandle))
+	h.GET("/webapi/sites/:site/desktops/:desktopName/:ott/connect", h.WithClusterAuth(h.desktopConnectHandle))
 	// GET /webapi/sites/:site/desktopplayback/:sid?access_token=<bearer_token>
 	h.GET("/webapi/sites/:site/desktopplayback/:sid", h.WithAuth(h.desktopPlaybackHandle))
 
@@ -2254,14 +2259,14 @@ func toFieldsSlice(rawEvents []apievents.AuditEvent) ([]events.EventFields, erro
 	return el, nil
 }
 
-// siteSessionsGet gets the list of site sessions filtered by creation time
-// and whether they're active or not
+// desktopIsActive checks if a desktop has an active session and if so, returns a one time token that is needed
+// to start a session to said desktop.
 //
 // GET /v1/webapi/sites/:site/desktop_is_active/:desktop
 //
 // Response body:
 //
-// {"active": bool}
+// {"active": bool, "ott": string}
 func (h *Handler) desktopIsActive(w http.ResponseWriter, r *http.Request, p httprouter.Params, ctx *SessionContext, site reversetunnel.RemoteSite) (interface{}, error) {
 	desktopName := p.ByName("desktop")
 	trackers, err := h.auth.proxyClient.GetActiveSessionTrackers(r.Context())
@@ -2269,19 +2274,30 @@ func (h *Handler) desktopIsActive(w http.ResponseWriter, r *http.Request, p http
 		return nil, trace.Wrap(err)
 	}
 
+	rawToken := make([]byte, 8)
+	_, err = rand.Read(rawToken)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	token := hex.EncodeToString(rawToken)
+	h.Mutex.Lock()
+	h.desktopTokens[token] = struct{}{}
+	h.Mutex.Unlock()
+
 	// TODO(joel): return false if the user doesn't have access to the desktop
-	// TODO(joel): make sure you have to click the popup for the connect URI to work
 	for _, tracker := range trackers {
 		if tracker.GetSessionKind() == types.WindowsDesktopSessionKind && tracker.GetState() == types.SessionState_SessionStateRunning && tracker.GetDesktopName() == desktopName {
-			return desktopIsActive{true}, nil
+			return desktopIsActive{true, token}, nil
 		}
 	}
 
-	return desktopIsActive{false}, nil
+	return desktopIsActive{false, token}, nil
 }
 
 type desktopIsActive struct {
-	Active bool `json:"active"`
+	Active bool   `json:"active"`
+	Token  string `json:"ott"`
 }
 
 // clusterSearchEvents returns all audit log events matching the provided criteria

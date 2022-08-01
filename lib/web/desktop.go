@@ -50,6 +50,16 @@ func (h *Handler) desktopConnectHandle(
 	ctx *SessionContext,
 	site reversetunnel.RemoteSite,
 ) (interface{}, error) {
+	token := p.ByName("ott")
+	h.Mutex.Lock()
+	if _, ok := h.desktopTokens[token]; !ok {
+		h.Mutex.Unlock()
+		return nil, trace.AccessDenied("invalid access token")
+	}
+
+	delete(h.desktopTokens, token)
+	h.Mutex.Unlock()
+
 	desktopName := p.ByName("desktopName")
 	if desktopName == "" {
 		return nil, trace.BadParameter("missing desktopName in request URL")
