@@ -2254,6 +2254,7 @@ func toFieldsSlice(rawEvents []apievents.AuditEvent) ([]events.EventFields, erro
 	return el, nil
 }
 
+// TODO(joel): add godoc here
 func (h *Handler) desktopIsActive(w http.ResponseWriter, r *http.Request, p httprouter.Params, ctx *SessionContext, site reversetunnel.RemoteSite) (interface{}, error) {
 	desktopName := p.ByName("desktop")
 	trackers, err := h.auth.proxyClient.GetActiveSessionTrackers(r.Context())
@@ -2261,6 +2262,7 @@ func (h *Handler) desktopIsActive(w http.ResponseWriter, r *http.Request, p http
 		return nil, trace.Wrap(err)
 	}
 
+	// TODO(joel): return false if the user doesn't have access to the desktop
 	for _, tracker := range trackers {
 		if tracker.GetSessionKind() == types.WindowsDesktopSessionKind && tracker.GetDesktopName() == desktopName {
 			return desktopIsActive{true}, nil
