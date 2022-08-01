@@ -74,8 +74,11 @@ from source.
 </TabItem>
 </Tabs>
 
-{/* TODO: Add a command to execute the binary and make sure it's been installed
-correctly */}
+Ensure that the plugin is installed correctly:
+
+```code
+$ teleport-email version
+```
 
 ## Step 3/8. Create a user and role for the plugin
 
@@ -154,10 +157,15 @@ your Mailgun account. Assign `private_key` to your Mailgun private key.
 
 Assign `host` to the fully qualified domain name of your SMTP service, omitting
 the URL scheme and port. Assign `port` to the port of your SMTP service, then
-fill in `username` and `password`. 
+fill in `username` and `password`.
 
-{/* TODO: What to do for password_file? Always use this instead of password? */}
+<Notice type="tip">
 
+You can also save your password to a separate file and assign `password_file` to
+the file's path. The plugin reads the content of `password_file` and uses the
+literal value.
+
+</Notice>
 </TabItem>
 </Tabs>
 
