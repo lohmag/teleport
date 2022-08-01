@@ -425,6 +425,9 @@ const (
 
 	// BotGenerationLabel is a label used to record the certificate generation counter.
 	BotGenerationLabel = "teleport.internal/bot-generation"
+
+	// InternalResourceIDLabel is a label used to store an internal resource id for provision tokens
+	InternalResourceIDLabel = "teleport.internal/resource-id"
 )
 
 // RequestableResourceKinds lists all Teleport resource kinds users can request access to.

@@ -31,6 +31,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gravitational/teleport/api/client/proto"
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib/auth"
@@ -52,6 +53,8 @@ type nodeJoinToken struct {
 	Expiry time.Time `json:"expiry,omitempty"`
 	// Method is the join method that the token supports
 	Method types.JoinMethod `json:"method"`
+	// InternalResourceID contains the id of the InternalResourceID label
+	InternalResourceID string `json:"internalResourceID,omitempty"`
 }
 
 // scriptSettings is used to hold values which are passed into the function that
@@ -120,15 +123,28 @@ func (h *Handler) createTokenHandle(w http.ResponseWriter, r *http.Request, para
 		return nil, trace.Wrap(err)
 	}
 
+	var internalResourceID string
+	queryValues := r.URL.Query()
+
+	// The client wants to discover the resources which joined the cluster using this token.
+	if queryValues.Has("discover") {
+		// When a Node joins the cluster, it will inject the Token labels into itself.
+		// The client can then query the resources by this id and answer the question:
+		//   - Which Node X joined the cluster from this token Y?
+		internalResourceID = uuid.NewString()
+		provisionToken.SetInternalResourceIDLabel(internalResourceID)
+	}
+
 	err = clt.CreateToken(r.Context(), provisionToken)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
 
 	return &nodeJoinToken{
-		ID:     tokenName,
-		Expiry: expires,
-		Method: provisionToken.GetJoinMethod(),
+		ID:                 tokenName,
+		Expiry:             expires,
+		Method:             provisionToken.GetJoinMethod(),
+		InternalResourceID: internalResourceID,
 	}, nil
 }
 
@@ -247,7 +263,7 @@ func getJoinScript(ctx context.Context, settings scriptSettings, m nodeAPIGetter
 
 	// The provided token can be attacker controlled, so we must validate
 	// it with the backend before using it to generate the script.
-	_, err := m.GetToken(ctx, settings.token)
+	token, err := m.GetToken(ctx, settings.token)
 	if err != nil {
 		return "", trace.BadParameter("invalid token")
 	}
@@ -276,6 +292,12 @@ func getJoinScript(ctx context.Context, settings scriptSettings, m nodeAPIGetter
 	caPins, err := tlsca.CalculatePins(localCAResponse.TLSCA)
 	if err != nil {
 		return "", trace.Wrap(err)
+	}
+
+	labels := token.GetMetadata().Labels
+	labelsList := make([]string, len(labels))
+	for k, v := range labels {
+		labelsList = append(labelsList, fmt.Sprintf("%s=%s", k, v))
 	}
 
 	var buf bytes.Buffer
@@ -307,6 +329,7 @@ func getJoinScript(ctx context.Context, settings scriptSettings, m nodeAPIGetter
 		"appName":        settings.appName,
 		"appURI":         settings.appURI,
 		"joinMethod":     settings.joinMethod,
+		"labels":         strings.Join(labelsList, ","),
 	})
 	if err != nil {
 		return "", trace.Wrap(err)

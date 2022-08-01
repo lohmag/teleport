@@ -58,6 +58,16 @@ type ProvisionToken interface {
 	GetJoinMethod() JoinMethod
 	// GetBotName returns the BotName field which must be set for joining bots.
 	GetBotName() string
+
+	// SetInternalResourceIDLabel sets the InternalResourceID label
+	//
+	// When using the `install.sh` script to automtically join a cluster from a token
+	//   if the label is set, it will inject it into the resource labels
+	//
+	// Later on, clients can query the resources using this ID.
+	// This label is hidden from the end-user because it starts with `teleport.internal/`
+	SetInternalResourceIDLabel(string)
+
 	// V1 returns V1 version of the resource
 	V1() *ProvisionTokenV1
 	// String returns user friendly representation of the resource
@@ -248,6 +258,17 @@ func (p *ProvisionTokenV2) GetMetadata() Metadata {
 // SetMetadata sets resource metatada
 func (p *ProvisionTokenV2) SetMetadata(meta Metadata) {
 	p.Metadata = meta
+}
+
+// SetInternalResourceIDLabel sets the label `teleport.internal/resource-id` to the provided ID
+// When we add the Resource into the cluster, it inherits the label
+// We can then search for this resource using the provided ID
+func (p *ProvisionTokenV2) SetInternalResourceIDLabel(id string) {
+	if p.Metadata.Labels == nil {
+		p.Metadata.Labels = make(map[string]string)
+	}
+
+	p.Metadata.Labels[InternalResourceIDLabel] = id
 }
 
 // V1 returns V1 version of the resource
