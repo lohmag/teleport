@@ -713,7 +713,8 @@ steps:
   - $TeleportSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/teleport"
   - $WebappsSrc = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/go/src/github.com/gravitational/webapps"
   - $GoVersion = "1.18.3"
-  - $NodeVersion = ""16.13.2"
+  - $NodeVersion = "16.13.2"
+  - $Env:GOCACHE = "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/gocache"
   - . "$TeleportSrc/build.assets/windows/build.ps1"
   - Enable-Go -GoVersion $GoVersion -ToolchainDir "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/toolchains"
   - Enable-Node -NodeVersion $NodeVersion -ToolchainDir "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER/toolchains"
@@ -5731,6 +5732,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: 777b3530fae7bff6cfe79269a03ef3fe099c54acec5d76de1392bb906f96c136
+hmac: 00b69a6cabc6e28a612148c826e60b7f04f411cac6dc7d9d52b2d979baf834a3
 
 ...
