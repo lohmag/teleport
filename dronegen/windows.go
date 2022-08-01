@@ -102,6 +102,7 @@ func windowsPushPipeline() pipeline {
 				`go build -o build/tsh ./tool/tsh`,
 				`cd $WebappsSrc`,
 				`yarn install`,
+				`yarn build-and-package-term`,
 			},
 		},
 		cleanUpWindowsWorkspaceStep(p.Workspace.Path),
