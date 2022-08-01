@@ -99,6 +99,7 @@ func windowsPushPipeline() pipeline {
 				`. "$TeleportSrc/build.assets/windows/build.ps1"`,
 				`Enable-Go -GoVersion $GoVersion -ToolchainDir "` + windowsToolchainDir + `"`,
 				`Enable-Node -NodeVersion $NodeVersion -ToolchainDir "` + windowsToolchainDir + `"`,
+				`cd $TeleportSrc`,
 				`go build -o build/tsh ./tool/tsh`,
 				`cd $WebappsSrc`,
 				`yarn install`,
