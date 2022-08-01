@@ -2263,8 +2263,9 @@ func (h *Handler) desktopIsActive(w http.ResponseWriter, r *http.Request, p http
 	}
 
 	// TODO(joel): return false if the user doesn't have access to the desktop
+	// TODO(joel): make sure you have to click the popup for the connect URI to work
 	for _, tracker := range trackers {
-		if tracker.GetSessionKind() == types.WindowsDesktopSessionKind && tracker.GetDesktopName() == desktopName {
+		if tracker.GetSessionKind() == types.WindowsDesktopSessionKind && tracker.GetState() == types.SessionState_SessionStateRunning && tracker.GetDesktopName() == desktopName {
 			return desktopIsActive{true}, nil
 		}
 	}
