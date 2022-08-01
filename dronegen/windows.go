@@ -21,6 +21,12 @@ const (
 	windowsToolchainDir = perBuildWorkspace + `/toolchains`
 	perBuildTeleportSrc = perBuildWorkspace + "/go/src/github.com/gravitational/teleport"
 	perBuildWebappsSrc  = perBuildWorkspace + "/go/src/github.com/gravitational/webapps"
+
+	// Hardcoded tool versions that we would normally pull from the makefile,
+	// but unfortunately our Makefiles use too many POSIX-isms for us to use on
+	// Windows, so for now we will just say the versions we want here.
+	windowsGoVersion   = "1.18.3"
+	windowsNodeVersion = "16.13.2"
 )
 
 func newWindowsPipeline(name string) pipeline {
@@ -79,7 +85,25 @@ func windowsPushPipeline() pipeline {
 		},
 		installWindowsNodeToolchainStep(p.Workspace.Path),
 		installWindowsGoToolchainStep(p.Workspace.Path),
-
+		{
+			Name: "Build Windows Artifacts",
+			Environment: map[string]value{
+				"WORKSPACE_DIR": {raw: p.Workspace.Path},
+			},
+			Commands: []string{
+				`$Workspace = "` + perBuildWorkspace + `"`,
+				`$TeleportSrc = "` + perBuildTeleportSrc + `"`,
+				`$WebappsSrc = "` + perBuildWebappsSrc + `"`,
+				`$GoVersion = "` + windowsGoVersion + `"`,
+				`$NodeVersion = ""` + windowsNodeVersion + `"`,
+				`. "$TeleportSrc/build.assets/windows/build.ps1"`,
+				`Enable-Go -GoVersion $GoVersion -ToolchainDir "` + windowsToolchainDir + `"`,
+				`Enable-Node -NodeVersion $NodeVersion -ToolchainDir "` + windowsToolchainDir + `"`,
+				`go build -o build/tsh ./tool/tsh`,
+				`cd $WebappsSrc`,
+				`yarn install`,
+			},
+		},
 		cleanUpWindowsWorkspaceStep(p.Workspace.Path),
 	}
 
@@ -98,7 +122,7 @@ func installWindowsNodeToolchainStep(workspacePath string) step {
 			// We can't use make, as there are too many posix dependencies to
 			// abstract away right now, so instead of `$(make -C $TeleportSrc/build.assets print-node-version)`,
 			// we will just hardcode it for now
-			`$NodeVersion = "16.13.2"`,
+			`$NodeVersion = "` + windowsNodeVersion + `"`,
 			`Install-Node -NodeVersion $NodeVersion -ToolchainDir "` + windowsToolchainDir + `"`,
 		},
 	}
@@ -116,7 +140,7 @@ func installWindowsGoToolchainStep(workspacePath string) step {
 			// We can't use make, as there are too many posix dependencies to
 			// abstract away right now, so instead of `$(make -C $TeleportSrc/build.assets print-go-version)`,
 			// we will just hardcode it for now
-			`$GoVersion = "1.18.3"`,
+			`$GoVersion = "` + windowsGoVersion + `"`,
 			`Install-Go -GoVersion $GoVersion -ToolchainDir "` + windowsToolchainDir + `"`,
 		},
 	}
