@@ -354,6 +354,7 @@ func NewHandler(cfg Config, opts ...HandlerOption) (*APIHandler, error) {
 	h.GET("/webapi/sites/:site/sessions", h.WithClusterAuth(h.siteSessionsGet))      // get active list of sessions
 	h.POST("/webapi/sites/:site/sessions", h.WithClusterAuth(h.siteSessionGenerate)) // create active session metadata
 	h.GET("/webapi/sites/:site/sessions/:sid", h.WithClusterAuth(h.siteSessionGet))  // get active session metadata
+	h.GET("webapi/sites/:site/desktop_is_active/:desktop", h.WithClusterAuth(h.desktopIsActive))
 
 	// Audit events handlers.
 	h.GET("/webapi/sites/:site/events/search", h.WithClusterAuth(h.clusterSearchEvents))                 // search site events
@@ -2251,6 +2252,26 @@ func toFieldsSlice(rawEvents []apievents.AuditEvent) ([]events.EventFields, erro
 	}
 
 	return el, nil
+}
+
+func (h *Handler) desktopIsActive(w http.ResponseWriter, r *http.Request, p httprouter.Params, ctx *SessionContext, site reversetunnel.RemoteSite) (interface{}, error) {
+	desktopName := p.ByName("desktop")
+	trackers, err := h.auth.proxyClient.GetActiveSessionTrackers(r.Context())
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	for _, tracker := range trackers {
+		if tracker.GetSessionKind() == types.WindowsDesktopSessionKind && tracker.GetDesktopName() == desktopName {
+			return desktopIsActive{true}, nil
+		}
+	}
+
+	return desktopIsActive{false}, nil
+}
+
+type desktopIsActive struct {
+	Active bool `json:"active"`
 }
 
 // clusterSearchEvents returns all audit log events matching the provided criteria
