@@ -162,6 +162,7 @@ func (p *defaultModules) Features() Features {
 		Desktop:           true,
 		MachineID:         true,
 		ModeratedSessions: false, // moderated sessions is supported in enterprise only
+		OIDC:              true,
 	}
 }
 
