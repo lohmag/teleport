@@ -81,6 +81,7 @@ function Install-Node {
         Invoke-WebRequest -Uri https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip -OutFile $NodeZipfile
         Expand-Archive -Path $NodeZipfile -DestinationPath $ToolchainDir
         $Env:Path = "$Env:Path;$ToolchainDir/node-v$NodeVersion-win-x64"
+        npm config set msvs_version 2017
         corepack enable yarn
     }
 }
