@@ -727,6 +727,7 @@ steps:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
 - name: Clean up workspace (post)
   commands:
+  - $ErrorActionPreference = 'Continue'
   - Remove-Item -Recurse -Force -Path "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER"
   environment:
     WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
@@ -5732,6 +5733,6 @@ volumes:
       name: drone-s3-debrepo-pvc
 ---
 kind: signature
-hmac: 8119cfcf4d7eec28a7750f8dd6ad557558e2c4d7bc04e46aaf5be826fc10ebee
+hmac: 0bdd289a006876343cb6ed2ab5c30c34abfca6bfe09519d39a480e76236764b2
 
 ...

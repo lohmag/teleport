@@ -101,7 +101,9 @@ func windowsPushPipeline() pipeline {
 				`Enable-Go -GoVersion $GoVersion -ToolchainDir "` + windowsToolchainDir + `"`,
 				`Enable-Node -NodeVersion $NodeVersion -ToolchainDir "` + windowsToolchainDir + `"`,
 				`cd $TeleportSrc`,
-				//`go build -o build/tsh ./tool/tsh`,
+				// Building a real `tsh` would require installing MinGW gcc and getting
+				// paths properly set up, so for now we will create an phoney `tsh.exe`
+				// (just an empty file) to satisfy the Teleport Connect build.
 				`New-Item "build/tsh.exe" -Force -ItemType file`, // create a phoney tsh
 				`cd $WebappsSrc`,
 				`yarn install`,
@@ -158,6 +160,10 @@ func cleanUpWindowsWorkspaceStep(workspacePath string) step {
 			Status: []string{"success", "failure"},
 		},
 		Commands: []string{
+			// We don't want to break the build based on just a failed cleanup,
+			// so we just tell PowerShell to carry on as best it can in the
+			// face of an error
+			`$ErrorActionPreference = 'Continue'`,
 			`Remove-Item -Recurse -Force -Path "$Env:WORKSPACE_DIR/$Env:DRONE_BUILD_NUMBER"`,
 		},
 	}
